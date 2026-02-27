@@ -1,0 +1,55 @@
+const palette = {
+  white: "#FFFFFF",
+  black: "#000000",
+  gray50: "#F9FAFB",
+  gray100: "#F3F4F6",
+  gray200: "#E5E7EB",
+  gray300: "#D1D5DB",
+  gray400: "#9CA3AF",
+  gray500: "#6B7280",
+  gray600: "#4B5563",
+  gray700: "#374151",
+  gray800: "#1F2937",
+  gray900: "#111827",
+  blue50: "#EFF6FF",
+  blue100: "#DBEAFE",
+  blue400: "#60A5FA",
+  blue500: "#3B82F6",
+  blue600: "#2563EB",
+  green400: "#4ADE80",
+  green500: "#22C55E",
+  red400: "#F87171",
+  red500: "#EF4444",
+  yellow400: "#FACC15",
+} as const;
+
+export const colors = {
+  background: {
+    primary: palette.white,
+    secondary: palette.gray50,
+    card: palette.white,
+  },
+  text: {
+    primary: palette.gray900,
+    secondary: palette.gray500,
+    disabled: palette.gray300,
+    inverse: palette.white,
+  },
+  primary: {
+    default: palette.blue500,
+    hover: palette.blue600,
+    light: palette.blue50,
+    text: palette.white,
+  },
+  border: {
+    default: palette.gray200,
+    focus: palette.blue500,
+  },
+  status: {
+    success: palette.green500,
+    successLight: palette.green400,
+    error: palette.red500,
+    errorLight: palette.red400,
+    warning: palette.yellow400,
+  },
+} as const;
