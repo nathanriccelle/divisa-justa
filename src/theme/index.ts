@@ -2,12 +2,12 @@ export * from "./colors";
 export * from "./spacing";
 export * from "./typography";
 
-import { colors } from "./colors";
+import { theme as colorTheme } from "./colors";
 import { borderRadius, shadow, spacing } from "./spacing";
 import { fontSize, fontWeight, textStyles } from "./typography";
 
 export const theme = {
-  colors,
+  colors: colorTheme,
   fontSize,
   textStyles,
   fontWeight,

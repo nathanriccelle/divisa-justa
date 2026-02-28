@@ -1,55 +1,95 @@
+// ─────────────────────────────────────────────
+//  COLOR SYSTEM — Dark Only
+// ─────────────────────────────────────────────
+
 const palette = {
-  white: "#FFFFFF",
-  black: "#000000",
-  gray50: "#F9FAFB",
-  gray100: "#F3F4F6",
-  gray200: "#E5E7EB",
-  gray300: "#D1D5DB",
-  gray400: "#9CA3AF",
-  gray500: "#6B7280",
-  gray600: "#4B5563",
-  gray700: "#374151",
-  gray800: "#1F2937",
-  gray900: "#111827",
-  blue50: "#EFF6FF",
-  blue100: "#DBEAFE",
-  blue400: "#60A5FA",
-  blue500: "#3B82F6",
-  blue600: "#2563EB",
-  green400: "#4ADE80",
-  green500: "#22C55E",
-  red400: "#F87171",
-  red500: "#EF4444",
-  yellow400: "#FACC15",
+  // Neutros
+  black: "#111111", // fundo mais profundo
+  dark100: "#1A1C1A", // fundo principal de telas
+  dark200: "#222422", // cards e seções
+  dark300: "#2C2E2C", // cards elevados / inputs
+  dark400: "#3A3C3A", // bordas e divisores
+  dark500: "#5A5C5A", // texto desabilitado
+  gray400: "#8A8C8A", // texto secundário
+  white: "#F4F4F4", // texto primário (não puro)
+
+  // Lime green — cor primária da marca
+  lime: "#C5F135", // primário — botões, badges, destaques
+  limeDark: "#9EC02A", // pressed / hover
+  limeSubtle: "#1E2910", // fundo sutil com tom lime (cards tintados)
+
+  // Estados financeiros
+  red: "#EF4444", // negativo
+  redSubtle: "#2A0A0A", // fundo negativo
+  redText: "#FF8080", // texto negativo
 } as const;
 
-export const colors = {
-  background: {
-    primary: palette.white,
-    secondary: palette.gray50,
-    card: palette.white,
-  },
-  text: {
-    primary: palette.gray900,
-    secondary: palette.gray500,
-    disabled: palette.gray300,
-    inverse: palette.white,
-  },
-  primary: {
-    default: palette.blue500,
-    hover: palette.blue600,
-    light: palette.blue50,
-    text: palette.white,
-  },
-  border: {
-    default: palette.gray200,
-    focus: palette.blue500,
-  },
-  status: {
-    success: palette.green500,
-    successLight: palette.green400,
-    error: palette.red500,
-    errorLight: palette.red400,
-    warning: palette.yellow400,
-  },
+// ─────────────────────────────────────────────
+// TEMA ÚNICO — DARK
+// ─────────────────────────────────────────────
+export const theme = {
+  // Fundos
+  bg: palette.black, // fundo do app
+  bgScreen: palette.dark100, // fundo de telas
+  bgCard: palette.dark200, // cards padrão
+  bgCardRaised: palette.dark300, // cards elevados, inputs
+  bgAccent: palette.limeSubtle, // card com destaque lime
+
+  // Textos
+  textPrimary: palette.white, // títulos, valores
+  textSecondary: palette.gray400, // labels, subtítulos
+  textDisabled: palette.dark500, // desabilitado
+  textOnLime: palette.black, // texto sobre fundo lime (preto no lime)
+
+  // Marca
+  primary: palette.lime, // #C5F135 — botões, ícones ativos
+  primaryPress: palette.limeDark, // estado pressionado
+
+  // Bordas
+  border: palette.dark400,
+  borderFocus: palette.lime,
+
+  // Financeiro
+  positive: palette.lime, // valor positivo "+R$ 1.200"
+  positiveBg: palette.limeSubtle,
+  negative: palette.redText, // valor negativo "−R$ 340"
+  negativeBg: palette.redSubtle,
+  pending: palette.gray400, // pendente / neutro
+
+  // Overlay
+  overlay: "rgba(0,0,0,0.70)",
 } as const;
+
+export type Theme = typeof theme;
+
+// ─────────────────────────────────────────────
+// EXEMPLO DE USO
+// ─────────────────────────────────────────────
+//
+//  import { theme as T } from "@/theme/colors";
+//
+//  <View style={{ backgroundColor: T.bgScreen }}>
+//    <Text style={{ color: T.textPrimary }}>$ 112,933.42</Text>
+//    <Text style={{ color: T.textSecondary }}>Main account</Text>
+//    <Text style={{ color: T.positive }}>+R$ 1.200,00</Text>
+//    <Text style={{ color: T.negative }}>−R$ 340,00</Text>
+//
+//    {/* Botão primário */}
+//    <View style={{ backgroundColor: T.primary }}>
+//      <Text style={{ color: T.textOnLime }}>Send</Text>
+//    </View>
+//  </View>
+
+// ─────────────────────────────────────────────
+// REFERÊNCIA RÁPIDA
+// ─────────────────────────────────────────────
+//
+//  bg           #111111   fundo do app
+//  bgScreen     #1A1C1A   telas
+//  bgCard       #222422   cards
+//  bgCardRaised #2C2E2C   cards elevados
+//  primary      #C5F135   lime — ações, destaques
+//  textPrimary  #F4F4F4   títulos
+//  textSecondary#8A8C8A   labels
+//  positive     #C5F135   saldo positivo
+//  negative     #FF8080   saldo negativo
