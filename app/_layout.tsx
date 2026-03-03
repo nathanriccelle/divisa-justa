@@ -19,7 +19,7 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={navigationTheme}>
       <Stack screenOptions={{ headerShown: false }}>
-        {/* O Expo Router encontra automaticamente o index.tsx e o create-event.tsx! */}
+        {/* O Expo Router encontra automaticamente as telas! */}
       </Stack>
     </ThemeProvider>
   );

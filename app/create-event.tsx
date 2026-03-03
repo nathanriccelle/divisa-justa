@@ -1,22 +1,25 @@
 import { router } from "expo-router";
 import {
-    ArrowRight,
-    ChevronLeft,
-    PenLine,
-    Plus,
-    Trash2,
-    UserPlus,
+  AlertTriangle,
+  ArrowRight,
+  ChevronLeft,
+  PenLine,
+  Plus,
+  Trash2,
+  UserPlus,
 } from "lucide-react-native";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Animated,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  Vibration,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -24,8 +27,8 @@ import { theme } from "../src/theme";
 const T = theme.colors;
 
 import {
-    CURRENCY_LIST,
-    CurrencySelector,
+  CURRENCY_LIST,
+  CurrencySelector,
 } from "../src/components/CurrencySelector";
 
 type Participant = {
@@ -38,7 +41,6 @@ type Participant = {
 
 export default function CreateEventScreen() {
   const [selectedCurrency, setSelectedCurrency] = useState(CURRENCY_LIST[0]);
-
   const [participants, setParticipants] = useState<Participant[]>([
     {
       id: "owner-1",
@@ -49,8 +51,36 @@ export default function CreateEventScreen() {
     },
   ]);
   const [newParticipantName, setNewParticipantName] = useState("");
+  const [eventName, setEventName] = useState("");
 
-  //Função adicionar Participantes
+  // ESTADOS DO AVISO
+  const [showError, setShowError] = useState(false);
+  // O motor que controla a posição Y (altura) do nosso aviso
+  const slideAnim = useRef(new Animated.Value(-100)).current;
+
+  // Lógica da Animação do Aviso
+  useEffect(() => {
+    if (showError) {
+      Vibration.vibrate(50);
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        speed: 12,
+      }).start();
+
+      // Esconde automaticamente após 3 segundos
+      const timer = setTimeout(() => {
+        Animated.timing(slideAnim, {
+          toValue: -100, // Volta a esconder lá em cima
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => setShowError(false));
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [showError]);
+
   const handleAddParticipant = () => {
     if (newParticipantName.trim() === "") return;
     const initials = newParticipantName.trim().substring(0, 2).toUpperCase();
@@ -65,13 +95,47 @@ export default function CreateEventScreen() {
     setNewParticipantName("");
   };
 
-  // Função de Remover Participantes
   const handleRemoveParticipant = (idToRemove: string) => {
     setParticipants(participants.filter((person) => person.id !== idToRemove));
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: T.bgScreen }]}>
+      {/* COMPONENTE DE AVISO (FLUTUANTE) */}
+      {showError && (
+        <Animated.View
+          style={[
+            styles.errorToast,
+            { transform: [{ translateY: slideAnim }] },
+          ]}
+        >
+          <View
+            style={[
+              styles.errorToastContent,
+              { backgroundColor: T.negativeBg, borderColor: T.negative },
+            ]}
+          >
+            <AlertTriangle size={24} color={T.negative} />
+            <View style={{ marginLeft: theme.spacing[3], flex: 1 }}>
+              <Text
+                style={[
+                  theme.textStyles.subheadline,
+                  { color: T.negative, fontWeight: "bold" },
+                ]}
+              >
+                Faltou o Nome!
+              </Text>
+              <Text
+                style={[theme.textStyles.footnote, { color: T.textPrimary }]}
+              >
+                Até um "Churrasco sem nome" precisa de nome. Digita algo para
+                prosseguirmos!
+              </Text>
+            </View>
+          </View>
+        </Animated.View>
+      )}
+
       {/* CABECALHO */}
       <View style={styles.header}>
         <Pressable
@@ -106,18 +170,26 @@ export default function CreateEventScreen() {
             <View
               style={[
                 styles.inputContainer,
-                { backgroundColor: T.bgCardRaised, borderColor: T.border },
+                {
+                  backgroundColor: T.bgCardRaised,
+                  borderColor: showError ? T.negative : T.border,
+                },
               ]}
             >
               <PenLine
                 size={20}
-                color={T.textSecondary}
+                color={showError ? T.negative : T.textSecondary}
                 style={styles.inputIcon}
               />
               <TextInput
                 style={[styles.textInput, { color: T.textPrimary }]}
                 placeholder="Ex: Churrasco da Turma"
                 placeholderTextColor={T.textDisabled}
+                value={eventName}
+                onChangeText={(text) => {
+                  setEventName(text);
+                  if (showError) setShowError(false);
+                }}
               />
             </View>
           </View>
@@ -127,7 +199,6 @@ export default function CreateEventScreen() {
             <Text style={[styles.label, { color: T.textSecondary }]}>
               MOEDA
             </Text>
-
             <CurrencySelector
               selectedCurrency={selectedCurrency}
               onSelectCurrency={setSelectedCurrency}
@@ -161,7 +232,6 @@ export default function CreateEventScreen() {
                   color={T.textSecondary}
                   style={styles.inputIcon}
                 />
-
                 <TextInput
                   style={[styles.textInput, { color: T.textPrimary }]}
                   placeholder="Nome da pessoa"
@@ -171,7 +241,6 @@ export default function CreateEventScreen() {
                   onSubmitEditing={handleAddParticipant}
                 />
               </View>
-
               <Pressable
                 onPress={handleAddParticipant}
                 style={({ pressed }) => [
@@ -251,6 +320,22 @@ export default function CreateEventScreen() {
       {/* RODAPE */}
       <View style={[styles.footer, { backgroundColor: T.bgScreen }]}>
         <Pressable
+          onPress={() => {
+            // VALIDAÇÃO
+            if (eventName.trim() === "") {
+              setShowError(true);
+              return;
+            }
+
+            router.push({
+              pathname: "/event-details",
+              params: {
+                eventName: eventName.trim(),
+                currencySymbol: selectedCurrency.symbol,
+                participantsStr: JSON.stringify(participants),
+              },
+            });
+          }}
           style={({ pressed }) => [
             styles.mainButton,
             { backgroundColor: pressed ? T.primaryPress : T.primary },
@@ -356,5 +441,21 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.xl,
     justifyContent: "center",
     alignItems: "center",
+  },
+
+  errorToast: {
+    position: "absolute",
+    top: Platform.OS === "ios" ? 60 : 40,
+    left: theme.spacing[6],
+    right: theme.spacing[6],
+    zIndex: 100,
+  },
+  errorToastContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: theme.spacing[4],
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    ...theme.shadow.lg,
   },
 });
