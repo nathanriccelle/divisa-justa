@@ -1,6 +1,6 @@
-import { ReceiptText } from "lucide-react-native";
+import { CheckCircle2, ReceiptText } from "lucide-react-native";
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { theme } from "../theme";
 
 const T = theme.colors;
@@ -15,14 +15,15 @@ type EventSummaryCardProps = {
   currencySymbol: string;
   totalAmount?: string;
   participants: Participant[];
+  onFinishEvent: () => void;
 };
 
 export function EventSummaryCard({
   currencySymbol,
   totalAmount = "0,00",
   participants,
+  onFinishEvent,
 }: EventSummaryCardProps) {
-  // Pega apenas as 3 primeiras pessoas para o visual das bolinhas
   const displayAvatars = participants.slice(0, 3);
   const extraCount = participants.length > 3 ? participants.length - 3 : 0;
 
@@ -89,6 +90,25 @@ export function EventSummaryCard({
           </Text>
         </View>
       </View>
+
+      {/* BOTÃO DE ENCERRAR DIVISÃO */}
+      <Pressable
+        onPress={onFinishEvent}
+        style={({ pressed }) => [
+          styles.finishButton,
+          { backgroundColor: pressed ? T.primaryPress : T.primary },
+          pressed && { transform: [{ scale: 0.98 }] },
+        ]}
+      >
+        <CheckCircle2
+          size={20}
+          color={T.textOnLime}
+          style={{ marginRight: 8 }}
+        />
+        <Text style={[theme.textStyles.headline, { color: T.textOnLime }]}>
+          Encerrar Divisão
+        </Text>
+      </Pressable>
     </View>
   );
 }
@@ -124,5 +144,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing[3],
     paddingVertical: theme.spacing[1],
     borderRadius: theme.borderRadius.full,
+  },
+
+  finishButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: theme.spacing[6],
+    paddingVertical: theme.spacing[4],
+    borderRadius: theme.borderRadius.lg,
   },
 });

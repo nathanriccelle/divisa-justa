@@ -1,28 +1,34 @@
 import { router, useLocalSearchParams } from "expo-router";
 import {
-    Calendar,
-    Check,
-    Minus,
-    Plus,
-    PlusCircle,
-    Receipt,
-    User,
+  Calendar,
+  Check,
+  ChevronRight,
+  Minus,
+  Plus,
+  PlusCircle,
+  Receipt,
+  User,
+  X,
 } from "lucide-react-native";
 import React, { useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ParticipantCheckbox } from "../src/components/ParticipantCheckbox";
 import { theme } from "../src/theme";
+
+import { db } from "../src/db";
+import { expenses } from "../src/db/schema";
 
 const T = theme.colors;
 
@@ -33,11 +39,32 @@ type Participant = {
   isOwner: boolean;
 };
 
+// 👇 1. FUNÇÃO PARA PEGAR A DATA ATUAL
+const obterDataFormatada = () => {
+  const data = new Date();
+  const dia = data.getDate();
+  const meses = [
+    "Jan",
+    "Fev",
+    "Mar",
+    "Abr",
+    "Mai",
+    "Jun",
+    "Jul",
+    "Ago",
+    "Set",
+    "Out",
+    "Nov",
+    "Dez",
+  ];
+  return `Hoje, ${dia} ${meses[data.getMonth()]}`;
+};
+
 export default function AddExpenseScreen() {
-  // Recebe as pessoas da tela anterior
-  const { participantsStr, currencySymbol } = useLocalSearchParams<{
+  const { participantsStr, currencySymbol, eventId } = useLocalSearchParams<{
     participantsStr: string;
     currencySymbol: string;
+    eventId: string;
   }>();
 
   const participants: Participant[] = participantsStr
@@ -45,17 +72,26 @@ export default function AddExpenseScreen() {
     : [];
   const symbol = currencySymbol || "R$";
 
+  // Encontra quem é o organizador para ser o pagante por padrão
+  const defaultPayer = participants.find((p) => p.isOwner) || participants[0];
+
   // ESTADOS DO FORMULÁRIO
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [quantity, setQuantity] = useState(1);
 
-  // Array com os IDs de quem vai dividir a conta (por padrão, todos marcados)
+  // 👇 2. ESTADOS DO PAGANTE
+  const [payerId, setPayerId] = useState<string>(defaultPayer?.id || "");
+  const [showPayerModal, setShowPayerModal] = useState(false); // Controla a janelinha
+
+  // Pegamos o objeto completo do pagante atual para mostrar na tela
+  const currentPayer = participants.find((p) => p.id === payerId);
+
+  // Lista de quem vai dividir (todos marcados por padrão)
   const [splitWithIds, setSplitWithIds] = useState<string[]>(
     participants.map((p) => p.id),
   );
 
-  // Função para marcar/desmarcar pessoas na divisão
   const toggleParticipant = (id: string) => {
     if (splitWithIds.includes(id)) {
       setSplitWithIds(splitWithIds.filter((item) => item !== id));
@@ -64,9 +100,34 @@ export default function AddExpenseScreen() {
     }
   };
 
+  const handleSaveExpense = async () => {
+    if (!title.trim() || !amount.trim()) return;
+
+    try {
+      const numericAmount = parseFloat(amount.replace(",", "."));
+      if (isNaN(numericAmount)) return;
+
+      if (!payerId) throw new Error("Pagante não selecionado");
+
+      await db.insert(expenses).values({
+        id: `exp_${Date.now()}`,
+        eventId: eventId,
+        payerId: payerId, // 👈 Agora usamos o pagante que o usuário escolheu!
+        title: title.trim(),
+        amount: numericAmount,
+        quantity: quantity,
+        date: new Date(),
+        splitWithIds: JSON.stringify(splitWithIds),
+      });
+
+      router.back();
+    } catch (error) {
+      console.error("Erro ao salvar a despesa no banco:", error);
+    }
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: T.bgScreen }]}>
-      {/* CABEÇALHO COM BOTÕES DE TEXTO */}
       <View style={styles.header}>
         <Pressable
           onPress={() => router.back()}
@@ -86,8 +147,10 @@ export default function AddExpenseScreen() {
           Adicionar Despesa
         </Text>
 
-        <Pressable style={{ padding: theme.spacing[2] }}>
-          {/* Botão Salvar do topo (desabilitado se não tiver título ou valor) */}
+        <Pressable
+          style={{ padding: theme.spacing[2] }}
+          onPress={handleSaveExpense}
+        >
           <Text
             style={[
               theme.textStyles.body,
@@ -111,7 +174,6 @@ export default function AddExpenseScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 100 }}
         >
-          {/* INPUT: TÍTULO */}
           <View style={styles.inputGroup}>
             <Text style={[styles.label, { color: T.textSecondary }]}>
               Título do Item
@@ -137,7 +199,6 @@ export default function AddExpenseScreen() {
             </View>
           </View>
 
-          {/* INPUT: VALOR */}
           <View style={styles.inputGroup}>
             <Text style={[styles.label, { color: T.textSecondary }]}>
               Valor Unitário
@@ -162,14 +223,13 @@ export default function AddExpenseScreen() {
             </View>
           </View>
 
-          {/* BLOCO DE OPÇÕES (Quantidade, Quem pagou, Data) */}
           <View
             style={[
               styles.optionsBlock,
               { backgroundColor: T.bgCard, borderColor: T.border },
             ]}
           >
-            {/* Linha 1: Quantidade */}
+            {/* Quantidade */}
             <View
               style={[
                 styles.optionRow,
@@ -191,7 +251,6 @@ export default function AddExpenseScreen() {
                   Quantidade
                 </Text>
               </View>
-
               <View style={styles.qtySelector}>
                 <Pressable
                   onPress={() => setQuantity(Math.max(1, quantity - 1))}
@@ -219,11 +278,13 @@ export default function AddExpenseScreen() {
               </View>
             </View>
 
-            {/* Linha 2: Quem pagou? */}
-            <View
-              style={[
+            {/* Quem pagou? */}
+            <Pressable
+              onPress={() => setShowPayerModal(true)}
+              style={({ pressed }) => [
                 styles.optionRow,
                 { borderBottomColor: T.border, borderBottomWidth: 1 },
+                pressed && { backgroundColor: T.bgCardRaised },
               ]}
             >
               <View style={styles.optionLeft}>
@@ -241,24 +302,46 @@ export default function AddExpenseScreen() {
                   Quem pagou?
                 </Text>
               </View>
-              <View style={styles.payerBadge}>
-                <View
-                  style={[styles.miniAvatar, { backgroundColor: T.primary }]}
-                >
-                  <Text style={{ fontSize: 10, fontWeight: "bold" }}>EU</Text>
-                </View>
-                <Text
-                  style={[
-                    theme.textStyles.subheadline,
-                    { color: T.primary, fontWeight: "bold", marginLeft: 4 },
-                  ]}
-                >
-                  Você
-                </Text>
-              </View>
-            </View>
 
-            {/* Linha 3: Data */}
+              {/* Lado Direito: Badge + Setinha */}
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <View style={styles.payerBadge}>
+                  <View
+                    style={[styles.miniAvatar, { backgroundColor: T.primary }]}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 10,
+                        fontWeight: "bold",
+                        color: T.textOnLime,
+                      }}
+                    >
+                      {currentPayer?.initials}
+                    </Text>
+                  </View>
+                  <Text
+                    style={[
+                      theme.textStyles.subheadline,
+                      {
+                        color: T.primary,
+                        fontWeight: "bold",
+                        marginLeft: 4,
+                        marginRight: 8,
+                      }, // Adicionei marginRight aqui
+                    ]}
+                  >
+                    {currentPayer?.id === defaultPayer?.id
+                      ? "Você"
+                      : currentPayer?.name}
+                  </Text>
+                </View>
+
+                {/* 👈 A setinha mágica que mostra que é clicável! */}
+                <ChevronRight size={18} color={T.textSecondary} />
+              </View>
+            </Pressable>
+
+            {/* 👇 4. Data (AGORA É DINÂMICA) */}
             <View style={styles.optionRow}>
               <View style={styles.optionLeft}>
                 <View
@@ -284,7 +367,7 @@ export default function AddExpenseScreen() {
                     { color: T.textSecondary },
                   ]}
                 >
-                  Hoje, 24 Out
+                  {obterDataFormatada()}
                 </Text>
               </View>
             </View>
@@ -301,20 +384,19 @@ export default function AddExpenseScreen() {
               DIVIDIR COM
             </Text>
 
-            {/* Lista renderizada */}
             {participants.map((person) => (
               <ParticipantCheckbox
                 key={person.id}
                 name={person.name}
                 initials={person.initials}
                 isOwner={person.isOwner}
-                role={person.isOwner ? "Pagante" : undefined}
+                // 👇 5. MAGIA DA UX: A etiqueta "Pagante" acompanha dinamicamente quem está no payerId!
+                role={person.id === payerId ? "Pagante" : undefined}
                 isSelected={splitWithIds.includes(person.id)}
                 onToggle={() => toggleParticipant(person.id)}
               />
             ))}
 
-            {/* Botão Extra: Adicionar nova pessoa */}
             <Pressable style={styles.addPersonBtn}>
               <PlusCircle size={20} color={T.primary} />
               <Text
@@ -334,14 +416,16 @@ export default function AddExpenseScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* BOTÃO SALVAR */}
       <View style={[styles.footer, { backgroundColor: T.bgScreen }]}>
         <Pressable
+          onPress={handleSaveExpense}
           style={({ pressed }) => [
             styles.mainButton,
             { backgroundColor: pressed ? T.primaryPress : T.primary },
             pressed && { transform: [{ scale: 0.98 }] },
+            (!title || !amount) && { opacity: 0.5 },
           ]}
+          disabled={!title || !amount}
         >
           <Check
             size={20}
@@ -353,11 +437,110 @@ export default function AddExpenseScreen() {
           </Text>
         </Pressable>
       </View>
+
+      {/* 👇 6. O MODAL DE SELECIONAR QUEM PAGOU */}
+      <Modal
+        visible={showPayerModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowPayerModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[styles.modalContent, { backgroundColor: T.bgCardRaised }]}
+          >
+            {/* Cabeçalho do Modal */}
+            <View style={[styles.modalHeader, { borderBottomColor: T.border }]}>
+              <Text style={[theme.textStyles.title3, { color: T.textPrimary }]}>
+                Quem pagou a conta?
+              </Text>
+              <Pressable
+                onPress={() => setShowPayerModal(false)}
+                style={({ pressed }) => [pressed && { opacity: 0.5 }]}
+              >
+                <X size={24} color={T.textSecondary} />
+              </Pressable>
+            </View>
+
+            {/* Lista de pessoas para escolher */}
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              style={{ maxHeight: 300 }}
+            >
+              {participants.map((person) => {
+                const isSelected = person.id === payerId;
+                return (
+                  <Pressable
+                    key={person.id}
+                    onPress={() => {
+                      setPayerId(person.id); // Muda o pagante
+
+                      // Dica de UX: Se a pessoa pagou, automaticamente marcamos ela na divisão de consumos (caso esteja desmarcada)
+                      if (!splitWithIds.includes(person.id)) {
+                        setSplitWithIds([...splitWithIds, person.id]);
+                      }
+
+                      setShowPayerModal(false); // Fecha o modal
+                    }}
+                    style={({ pressed }) => [
+                      styles.payerOption,
+                      { borderBottomColor: T.border },
+                      pressed && { backgroundColor: T.bgCard },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.miniAvatar,
+                        {
+                          backgroundColor: isSelected ? T.primary : T.bgCard,
+                          width: 32,
+                          height: 32,
+                          marginRight: theme.spacing[3],
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          theme.textStyles.subheadline,
+                          {
+                            fontWeight: "bold",
+                            color: isSelected ? T.textOnLime : T.textPrimary,
+                          },
+                        ]}
+                      >
+                        {person.initials}
+                      </Text>
+                    </View>
+
+                    <Text
+                      style={[
+                        theme.textStyles.body,
+                        {
+                          color: T.textPrimary,
+                          flex: 1,
+                          fontWeight: isSelected ? "bold" : "normal",
+                        },
+                      ]}
+                    >
+                      {person.id === defaultPayer?.id
+                        ? "Você (Organizador)"
+                        : person.name}
+                    </Text>
+
+                    {isSelected && <Check size={20} color={T.primary} />}
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  // ... (Todos os estilos antigos continuam aqui iguais)
   container: { flex: 1 },
   header: {
     flexDirection: "row",
@@ -367,7 +550,6 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing[4],
   },
   content: { flex: 1, paddingHorizontal: theme.spacing[6] },
-
   inputGroup: { marginTop: theme.spacing[6] },
   label: {
     fontSize: theme.fontSize.xs,
@@ -390,7 +572,6 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_500Medium",
     fontSize: theme.fontSize.md,
   },
-
   amountContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -411,7 +592,6 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_700Bold",
     padding: 0,
   },
-
   optionsBlock: {
     marginTop: theme.spacing[8],
     borderRadius: theme.borderRadius.xl,
@@ -433,7 +613,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: theme.spacing[3],
   },
-
   qtySelector: { flexDirection: "row", alignItems: "center" },
   qtyBtn: {
     width: 32,
@@ -456,7 +635,6 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing[1],
     borderRadius: theme.borderRadius.full,
   },
-
   splitSection: { marginTop: theme.spacing[8] },
   addPersonBtn: {
     flexDirection: "row",
@@ -464,7 +642,6 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing[4],
     marginTop: theme.spacing[2],
   },
-
   footer: {
     padding: theme.spacing[6],
     paddingBottom: Platform.OS === "ios" ? 0 : theme.spacing[6],
@@ -475,5 +652,30 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.xl,
     justifyContent: "center",
     alignItems: "center",
+  },
+
+  // 👇 Novos estilos para o Modal de Pagante
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.65)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    borderTopLeftRadius: theme.borderRadius.xl,
+    borderTopRightRadius: theme.borderRadius.xl,
+    paddingBottom: theme.spacing[8],
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: theme.spacing[6],
+    borderBottomWidth: 1,
+  },
+  payerOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: theme.spacing[4],
+    borderBottomWidth: 1,
   },
 });

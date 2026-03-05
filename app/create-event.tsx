@@ -31,6 +31,9 @@ import {
   CurrencySelector,
 } from "../src/components/CurrencySelector";
 
+import { db } from "../src/db";
+import { events, participants as participantsTable } from "../src/db/schema";
+
 type Participant = {
   id: string;
   name: string;
@@ -55,10 +58,8 @@ export default function CreateEventScreen() {
 
   // ESTADOS DO AVISO
   const [showError, setShowError] = useState(false);
-  // O motor que controla a posição Y (altura) do nosso aviso
   const slideAnim = useRef(new Animated.Value(-100)).current;
 
-  // Lógica da Animação do Aviso
   useEffect(() => {
     if (showError) {
       Vibration.vibrate(50);
@@ -68,10 +69,9 @@ export default function CreateEventScreen() {
         speed: 12,
       }).start();
 
-      // Esconde automaticamente após 3 segundos
       const timer = setTimeout(() => {
         Animated.timing(slideAnim, {
-          toValue: -100, // Volta a esconder lá em cima
+          toValue: -100,
           duration: 300,
           useNativeDriver: true,
         }).start(() => setShowError(false));
@@ -85,7 +85,8 @@ export default function CreateEventScreen() {
     if (newParticipantName.trim() === "") return;
     const initials = newParticipantName.trim().substring(0, 2).toUpperCase();
     const newPerson: Participant = {
-      id: Date.now().toString(),
+      // Usamos um ID com timestamp mais aleatoriedade para evitar colisões rápidas
+      id: `usr_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
       name: newParticipantName.trim(),
       role: "",
       initials: initials,
@@ -97,6 +98,53 @@ export default function CreateEventScreen() {
 
   const handleRemoveParticipant = (idToRemove: string) => {
     setParticipants(participants.filter((person) => person.id !== idToRemove));
+  };
+
+  const handleSaveAndContinue = async () => {
+    // 1. Validação
+    if (eventName.trim() === "") {
+      setShowError(true);
+      return;
+    }
+
+    // 2. Base de Dados e Navegação
+    try {
+      const newEventId = `evt_${Date.now()}`;
+      const finalEventName = eventName.trim();
+
+      // Salva Evento
+      await db.insert(events).values({
+        id: newEventId,
+        name: finalEventName,
+        currencySymbol: selectedCurrency.symbol,
+        createdAt: new Date(),
+      });
+
+      // 👉 A CORREÇÃO ESTÁ AQUI: Geramos IDs completamente novos na hora de gravar!
+      const dbParticipants = participants.map((p, index) => ({
+        // Usamos o Date.now() + o index da pessoa + um número aleatório para garantir que é sempre único!
+        id: `usr_${Date.now()}_${index}_${Math.floor(Math.random() * 10000)}`,
+        eventId: newEventId,
+        name: p.name,
+        initials: p.initials,
+        isOwner: p.isOwner,
+      }));
+
+      await db.insert(participantsTable).values(dbParticipants);
+
+      // Navega para o próximo ecrã
+      router.push({
+        pathname: "/event-details",
+        params: {
+          eventId: newEventId,
+          eventName: finalEventName,
+          currencySymbol: selectedCurrency.symbol,
+          participantsStr: JSON.stringify(dbParticipants),
+        },
+      });
+    } catch (error) {
+      console.error("Erro ao guardar na base de dados:", error);
+    }
   };
 
   return (
@@ -320,22 +368,7 @@ export default function CreateEventScreen() {
       {/* RODAPE */}
       <View style={[styles.footer, { backgroundColor: T.bgScreen }]}>
         <Pressable
-          onPress={() => {
-            // VALIDAÇÃO
-            if (eventName.trim() === "") {
-              setShowError(true);
-              return;
-            }
-
-            router.push({
-              pathname: "/event-details",
-              params: {
-                eventName: eventName.trim(),
-                currencySymbol: selectedCurrency.symbol,
-                participantsStr: JSON.stringify(participants),
-              },
-            });
-          }}
+          onPress={handleSaveAndContinue}
           style={({ pressed }) => [
             styles.mainButton,
             { backgroundColor: pressed ? T.primaryPress : T.primary },
@@ -442,7 +475,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-
   errorToast: {
     position: "absolute",
     top: Platform.OS === "ios" ? 60 : 40,
