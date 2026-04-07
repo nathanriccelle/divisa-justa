@@ -31,6 +31,7 @@ import {
   CurrencySelector,
 } from "../src/components/CurrencySelector";
 
+import { useUser } from "@/src/contexts/UserContext";
 import { db } from "../src/db";
 import { events, participants as participantsTable } from "../src/db/schema";
 
@@ -43,13 +44,16 @@ type Participant = {
 };
 
 export default function CreateEventScreen() {
-  const [selectedCurrency, setSelectedCurrency] = useState(CURRENCY_LIST[0]);
+  const { userName, userCurrency } = useUser();
+  const defaultCurrency =
+    CURRENCY_LIST.find((c) => c.code === userCurrency) ?? CURRENCY_LIST[0];
+  const [selectedCurrency, setSelectedCurrency] = useState(defaultCurrency);
   const [participants, setParticipants] = useState<Participant[]>([
     {
       id: "owner-1",
-      name: "Você",
+      name: userName || "Você",
       role: "Organizador",
-      initials: "EU",
+      initials: userName ? userName.substring(0, 2).toUpperCase() : "EU",
       isOwner: true,
     },
   ]);

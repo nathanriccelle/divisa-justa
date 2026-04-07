@@ -1,3 +1,4 @@
+import { UserProvider } from "@/src/contexts/UserContext";
 import { DarkTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { SQLiteProvider, type SQLiteDatabase } from "expo-sqlite";
@@ -58,11 +59,11 @@ async function initializeDatabase(db: SQLiteDatabase) {
 export default function RootLayout() {
   return (
     <SQLiteProvider databaseName="divisajusta.db" onInit={initializeDatabase}>
-      <ThemeProvider value={navigationTheme}>
-        <Stack screenOptions={{ headerShown: false }}>
-          {/* O Expo Router encontra automaticamente as telas! */}
-        </Stack>
-      </ThemeProvider>
+      <UserProvider>
+        <ThemeProvider value={navigationTheme}>
+          <Stack screenOptions={{ headerShown: false }}></Stack>
+        </ThemeProvider>
+      </UserProvider>
     </SQLiteProvider>
   );
 }

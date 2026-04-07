@@ -1,12 +1,12 @@
 import { Banknote, ChevronDown, X } from "lucide-react-native";
 import React, { useState } from "react";
 import {
-    FlatList,
-    Modal,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  FlatList,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 import { theme } from "../theme";
@@ -20,6 +20,7 @@ export type Currency = {
 
 // 2. Exportamos a lista para podermos definir o valor inicial no ecrã principal
 export const CURRENCY_LIST: Currency[] = [
+  // Principais Globais
   { code: "BRL", name: "Real Brasileiro", symbol: "R$" },
   { code: "USD", name: "Dólar Americano", symbol: "$" },
   { code: "EUR", name: "Euro", symbol: "€" },
@@ -30,6 +31,23 @@ export const CURRENCY_LIST: Currency[] = [
   { code: "CHF", name: "Franco Suíço", symbol: "CHF" },
   { code: "CNY", name: "Yuan Chinês", symbol: "¥" },
   { code: "INR", name: "Rúpia Indiana", symbol: "₹" },
+
+  // América do Sul e Latina
+  { code: "ARS", name: "Peso Argentino", symbol: "$" },
+  { code: "CLP", name: "Peso Chileno", symbol: "$" },
+  { code: "COP", name: "Peso Colombiano", symbol: "$" },
+  { code: "PEN", name: "Sol Peruano", symbol: "S/" },
+  { code: "UYU", name: "Peso Uruguaio", symbol: "$U" },
+  { code: "PYG", name: "Guarani Paraguaio", symbol: "₲" },
+  { code: "BOB", name: "Boliviano", symbol: "Bs." },
+  { code: "MXN", name: "Peso Mexicano", symbol: "$" },
+
+  // Outras Moedas Importantes
+  { code: "SGD", name: "Dólar de Singapura", symbol: "S$" },
+  { code: "NZD", name: "Dólar Neozelandês", symbol: "NZ$" },
+  { code: "ZAR", name: "Rand Sul-Africano", symbol: "R" },
+  { code: "RUB", name: "Rublo Russo", symbol: "₽" },
+  { code: "AED", name: "Dirham dos Emirados", symbol: "د.إ" },
 ];
 
 type CurrencySelectorProps = {

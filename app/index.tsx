@@ -1,4 +1,4 @@
-import { router, useFocusEffect } from "expo-router";
+import { Redirect, router, useFocusEffect } from "expo-router";
 import { Plus, Receipt, Settings } from "lucide-react-native";
 import React, { useCallback, useState } from "react";
 import {
@@ -15,6 +15,7 @@ import { HistoryEventCard } from "../src/components/HistoryEventCard";
 import { theme } from "../src/theme";
 
 // Importações do Banco de Dados
+import { useUser } from "@/src/contexts/UserContext";
 import { desc } from "drizzle-orm";
 import { db } from "../src/db";
 import { events } from "../src/db/schema";
@@ -37,6 +38,7 @@ type EventData = {
 export default function HomeScreen() {
   const saudacao = obterSaudacao();
   const [historyEvents, setHistoryEvents] = useState<EventData[]>([]);
+  const { userName, hasOnboarded, clearData } = useUser();
 
   const fetchHistory = async () => {
     try {
@@ -53,9 +55,15 @@ export default function HomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      fetchHistory();
-    }, []),
+      if (hasOnboarded) {
+        fetchHistory();
+      }
+    }, [hasOnboarded]),
   );
+
+  if (hasOnboarded === null)
+    return <View style={{ flex: 1, backgroundColor: T.bgScreen }} />;
+  if (hasOnboarded === false) return <Redirect href="/onboard" />;
 
   // 👇 1. CABEÇALHO DA LISTA (Tudo que fica ACIMA dos eventos)
   const renderHeader = () => (
@@ -69,10 +77,10 @@ export default function HomeScreen() {
               { color: T.textSecondary, marginBottom: theme.spacing[1] },
             ]}
           >
-            {saudacao}, Nathan
+            {saudacao}, {userName || "Amigo"}
           </Text>
         </View>
-        <Pressable>
+        <Pressable onPress={clearData}>
           <Settings size={theme.spacing[8]} color={T.textSecondary} />
         </Pressable>
       </View>
