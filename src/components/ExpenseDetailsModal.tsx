@@ -1,7 +1,7 @@
 // Caminho: src/components/ExpenseDetailsModal.tsx
-import { ArrowRight, X } from "lucide-react-native";
+import { ArrowRight, Trash2, X } from "lucide-react-native";
 import React from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { theme } from "../theme";
 
 const T = theme.colors;
@@ -22,6 +22,7 @@ type ExpenseDetailsModalProps = {
   participants: ParticipantType[];
   currencySymbol: string;
   onClose: () => void;
+  onDelete?: (expenseId: string) => void;
 };
 
 export function ExpenseDetailsModal({
@@ -30,6 +31,7 @@ export function ExpenseDetailsModal({
   participants,
   currencySymbol,
   onClose,
+  onDelete,
 }: ExpenseDetailsModalProps) {
   if (!expense) return null;
 
@@ -46,6 +48,24 @@ export function ExpenseDetailsModal({
     .filter((p) => consumerIds.includes(p.id))
     .map((p) => p.name)
     .join(", ");
+
+  const handleDeleteConfirm = () => {
+    Alert.alert(
+      "Excluir Despesa",
+      `Tem certeza que deseja excluir "${expense.title}"? Essa ação não pode ser desfeita.`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: () => {
+            if (onDelete) onDelete(expense.id);
+            onClose();
+          },
+        },
+      ],
+    );
+  };
 
   return (
     <Modal
@@ -169,6 +189,29 @@ export function ExpenseDetailsModal({
                 {payer?.name} pagou e consumiu sozinho. Ninguém deve nada!
               </Text>
             )}
+            {onDelete && (
+              <Pressable
+                onPress={handleDeleteConfirm}
+                style={({ pressed }) => [
+                  styles.deleteButton,
+                  {
+                    backgroundColor: T.negativeBg,
+                    borderColor: T.negative,
+                  },
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <Trash2 size={20} color={T.negative} />
+                <Text
+                  style={[
+                    theme.textStyles.headline,
+                    { color: T.negative, marginLeft: theme.spacing[4] },
+                  ]}
+                >
+                  Excluir Item
+                </Text>
+              </Pressable>
+            )}
           </View>
         </View>
       </View>
@@ -213,5 +256,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: theme.spacing[3],
     borderBottomWidth: 1,
+  },
+  deleteButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: theme.spacing[4],
+    paddingVertical: theme.spacing[4],
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
   },
 });

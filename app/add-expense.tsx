@@ -28,7 +28,7 @@ import { ParticipantCheckbox } from "../src/components/ParticipantCheckbox";
 import { theme } from "../src/theme";
 
 import { db } from "../src/db";
-import { expenses } from "../src/db/schema";
+import { expenses, participants as participantsTable } from "../src/db/schema";
 
 const T = theme.colors;
 
@@ -67,9 +67,11 @@ export default function AddExpenseScreen() {
     eventId: string;
   }>();
 
-  const participants: Participant[] = participantsStr
+  const initialParticipants: Participant[] = participantsStr
     ? JSON.parse(participantsStr)
     : [];
+  const [participants, setParticipants] =
+    useState<Participant[]>(initialParticipants);
   const symbol = currencySymbol || "R$";
 
   // Encontra quem é o organizador para ser o pagante por padrão
@@ -92,11 +94,50 @@ export default function AddExpenseScreen() {
     participants.map((p) => p.id),
   );
 
+  const [showAddPersonModal, setShowAddPersonModal] = useState(false);
+  const [newPersonName, setNewPersonName] = useState("");
+
   const toggleParticipant = (id: string) => {
     if (splitWithIds.includes(id)) {
       setSplitWithIds(splitWithIds.filter((item) => item !== id));
     } else {
       setSplitWithIds([...splitWithIds, id]);
+    }
+  };
+
+  const handleAddNewPerson = async () => {
+    if (!newPersonName.trim()) return;
+
+    const initials = newPersonName.trim().substring(0, 2).toUpperCase();
+    const newPersonId = `usr_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+
+    const newPerson: Participant = {
+      id: newPersonId,
+      name: newPersonName.trim(),
+      initials: initials,
+      isOwner: false,
+    };
+
+    try {
+      // Salva no banco de dados
+      await db.insert(participantsTable).values({
+        id: newPersonId,
+        eventId: eventId,
+        name: newPerson.name,
+        initials: newPerson.initials,
+        isOwner: false,
+      });
+
+      // Atualiza a tela instantaneamente
+      setParticipants([...participants, newPerson]);
+      // Já coloca a pessoa para dividir a conta automaticamente
+      setSplitWithIds([...splitWithIds, newPersonId]);
+
+      // Limpa e fecha
+      setNewPersonName("");
+      setShowAddPersonModal(false);
+    } catch (error) {
+      console.error("Erro ao adicionar nova pessoa:", error);
     }
   };
 
@@ -397,7 +438,10 @@ export default function AddExpenseScreen() {
               />
             ))}
 
-            <Pressable style={styles.addPersonBtn}>
+            <Pressable
+              style={styles.addPersonBtn}
+              onPress={() => setShowAddPersonModal(true)}
+            >
               <PlusCircle size={20} color={T.primary} />
               <Text
                 style={[
@@ -533,6 +577,78 @@ export default function AddExpenseScreen() {
               })}
             </ScrollView>
           </View>
+        </View>
+      </Modal>
+      <Modal
+        visible={showAddPersonModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowAddPersonModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            style={[styles.modalContent, { backgroundColor: T.bgCardRaised }]}
+          >
+            <View style={[styles.modalHeader, { borderBottomColor: T.border }]}>
+              <Text style={[theme.textStyles.title3, { color: T.textPrimary }]}>
+                Adicionar Pessoa
+              </Text>
+              <Pressable
+                onPress={() => setShowAddPersonModal(false)}
+                style={({ pressed }) => [pressed && { opacity: 0.5 }]}
+              >
+                <X size={24} color={T.textSecondary} />
+              </Pressable>
+            </View>
+            <View style={{ padding: theme.spacing[2] }}>
+              <View
+                style={[
+                  styles.inputContainer,
+                  {
+                    backgroundColor: T.bgCard,
+                    borderColor: T.border,
+                    marginTop: 0,
+                    marginBottom: theme.spacing[2],
+                  },
+                ]}
+              >
+                <User
+                  size={20}
+                  color={T.textSecondary}
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={[styles.textInput, { color: T.textPrimary }]}
+                  placeholder="Nome do participante"
+                  placeholderTextColor={T.textDisabled}
+                  value={newPersonName}
+                  onChangeText={setNewPersonName}
+                  autoFocus
+                  onSubmitEditing={handleAddNewPerson}
+                />
+              </View>
+              <Pressable
+                onPress={handleAddNewPerson}
+                style={({ pressed }) => [
+                  styles.mainButton,
+                  {
+                    height: 48,
+                    backgroundColor: pressed ? T.primaryPress : T.primary,
+                  },
+                  pressed && { transform: [{ scale: 0.98 }] },
+                  !newPersonName.trim() && { opacity: 0.5 },
+                ]}
+                disabled={!newPersonName.trim()}
+              >
+                <Text
+                  style={[theme.textStyles.headline, { color: T.textOnLime }]}
+                >
+                  Adicionar
+                </Text>
+              </Pressable>
+            </View>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
     </SafeAreaView>

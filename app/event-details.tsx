@@ -224,6 +224,21 @@ export default function EventDetailsScreen() {
         participants={eventParticipants}
         currencySymbol={currencySymbol}
         onClose={() => setSelectedExpense(null)}
+        onDelete={async (id) => {
+          try {
+            //Apaga permanentemente do banco de dados (usando o ID)
+            await db.delete(expenses).where(eq(expenses.id, id));
+            // ATENÇÃO: Troque "setEventExpenses" pelo nome exato do seu "setEstado" da lista!
+            setEventExpenses((prev) => prev.filter((item) => item.id !== id));
+            setSelectedExpense(null);
+          } catch (error) {
+            console.error("Erro ao excluir item:", error);
+            Alert.alert(
+              "Ops!",
+              "Ocorreu um erro ao tentar excluir esta despesa.",
+            );
+          }
+        }}
       />
 
       <FinishEventModal
