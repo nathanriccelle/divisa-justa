@@ -157,7 +157,6 @@ export default function EventDetailsScreen() {
           {eventName}
         </Text>
 
-        {/* 👇 3. LIGAMOS A FUNÇÃO AO BOTÃO DE OPÇÕES (Três pontinhos) */}
         <Pressable
           onPress={handleDeleteEvent}
           style={({ pressed }) => [
