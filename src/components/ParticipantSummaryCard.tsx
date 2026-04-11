@@ -13,6 +13,7 @@ export type ConsumedItemProps = {
   splitCount: number;
   payerName: string;
   isPayer: boolean;
+  date: string;
 };
 
 type ParticipantSummaryCardProps = {
@@ -104,7 +105,7 @@ export function ParticipantSummaryCard({
                   >
                     <Text
                       style={[
-                        theme.textStyles.body,
+                        theme.textStyles.title3,
                         { color: T.textPrimary, fontWeight: "bold", flex: 1 },
                       ]}
                       numberOfLines={1}
@@ -130,10 +131,11 @@ export function ParticipantSummaryCard({
                     )}
                     <Text
                       style={[
-                        theme.textStyles.footnote,
+                        theme.textStyles.body,
                         { color: T.textSecondary, marginLeft: 4 },
                       ]}
                     >
+                      {item.date} •{" "}
                       {item.splitCount === 1
                         ? "Consumo Individual"
                         : `Dividido para ${item.splitCount} pessoas`}
@@ -147,7 +149,7 @@ export function ParticipantSummaryCard({
                         <CheckCircle2 size={14} color={T.textSecondary} />
                         <Text
                           style={[
-                            theme.textStyles.footnote,
+                            theme.textStyles.body,
                             { color: T.textSecondary, marginLeft: 4 },
                           ]}
                         >
@@ -212,9 +214,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  itemsList: { paddingHorizontal: theme.spacing[4] },
-  itemRow: { paddingVertical: theme.spacing[4] },
-  detailRow: { flexDirection: "row", alignItems: "center" },
+  itemsList: {
+    paddingHorizontal: theme.spacing[4],
+  },
+  itemRow: {
+    paddingVertical: theme.spacing[4],
+  },
+  detailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   footer: {
     flexDirection: "row",
     justifyContent: "space-between",

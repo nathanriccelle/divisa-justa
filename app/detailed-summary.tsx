@@ -2,12 +2,12 @@ import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { ChevronLeft, Share2 } from "lucide-react-native";
 import React, { useCallback, useState } from "react";
 import {
-    FlatList,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  FlatList,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -17,8 +17,8 @@ import { events, expenses, participants } from "../src/db/schema";
 import { theme } from "../src/theme";
 
 import {
-    ConsumedItemProps,
-    ParticipantSummaryCard,
+  ConsumedItemProps,
+  ParticipantSummaryCard,
 } from "../src/components/ParticipantSummaryCard";
 
 const T = theme.colors;
@@ -29,6 +29,27 @@ type ParticipantSummary = {
   initials: string;
   consumedItems: ConsumedItemProps[];
   totalConsumed: number;
+};
+
+const formatarDataCurta = (dataBanco: any) => {
+  if (!dataBanco) return "";
+  const d = new Date(dataBanco);
+  const dia = d.getDate().toString().padStart(2, "0");
+  const meses = [
+    "Jan",
+    "Fev",
+    "Mar",
+    "Abr",
+    "Mai",
+    "Jun",
+    "Jul",
+    "Ago",
+    "Set",
+    "Out",
+    "Nov",
+    "Dez",
+  ];
+  return `${dia} ${meses[d.getMonth()]}`;
 };
 
 export default function DetailedSummaryScreen() {
@@ -87,6 +108,8 @@ export default function DetailedSummaryScreen() {
         const itemTotalWithTax = exp.amount * exp.quantity * multiplier;
         const portionAmount = itemTotalWithTax / consumersIds.length;
 
+        const dataFormatada = formatarDataCurta(exp.date);
+
         consumersIds.forEach((cid) => {
           if (summaries[cid]) {
             summaries[cid].consumedItems.push({
@@ -96,6 +119,7 @@ export default function DetailedSummaryScreen() {
               splitCount: consumersIds.length,
               payerName: payerName,
               isPayer: cid === exp.payerId,
+              date: dataFormatada,
             });
             summaries[cid].totalConsumed += portionAmount;
           }

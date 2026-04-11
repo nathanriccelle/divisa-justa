@@ -24,6 +24,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { DatePickerModal } from "@/src/components/DatePickerModal";
 import { ParticipantCheckbox } from "../src/components/ParticipantCheckbox";
 import { theme } from "../src/theme";
 
@@ -39,10 +40,8 @@ type Participant = {
   isOwner: boolean;
 };
 
-// 👇 1. FUNÇÃO PARA PEGAR A DATA ATUAL
-const obterDataFormatada = () => {
-  const data = new Date();
-  const dia = data.getDate();
+const obterDataFormatada = (dataParaFormatar: Date) => {
+  const dia = dataParaFormatar.getDate();
   const meses = [
     "Jan",
     "Fev",
@@ -57,7 +56,17 @@ const obterDataFormatada = () => {
     "Nov",
     "Dez",
   ];
-  return `Hoje, ${dia} ${meses[data.getMonth()]}`;
+
+  // Verifica se a data escolhida é exatamente hoje
+  const hoje = new Date();
+  const isHoje =
+    dataParaFormatar.getDate() === hoje.getDate() &&
+    dataParaFormatar.getMonth() === hoje.getMonth() &&
+    dataParaFormatar.getFullYear() === hoje.getFullYear();
+
+  return isHoje
+    ? `Hoje, ${dia} ${meses[dataParaFormatar.getMonth()]}`
+    : `${dia} ${meses[dataParaFormatar.getMonth()]}`;
 };
 
 export default function AddExpenseScreen() {
@@ -82,7 +91,9 @@ export default function AddExpenseScreen() {
   const [amount, setAmount] = useState("");
   const [quantity, setQuantity] = useState(1);
 
-  // 👇 2. ESTADOS DO PAGANTE
+  const [expenseDate, setExpenseDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
   const [payerId, setPayerId] = useState<string>(defaultPayer?.id || "");
   const [showPayerModal, setShowPayerModal] = useState(false); // Controla a janelinha
 
@@ -157,7 +168,7 @@ export default function AddExpenseScreen() {
         title: title.trim(),
         amount: numericAmount,
         quantity: quantity,
-        date: new Date(),
+        date: expenseDate,
         splitWithIds: JSON.stringify(splitWithIds),
       });
 
@@ -382,8 +393,13 @@ export default function AddExpenseScreen() {
               </View>
             </Pressable>
 
-            {/* 👇 4. Data (AGORA É DINÂMICA) */}
-            <View style={styles.optionRow}>
+            <Pressable
+              onPress={() => setShowDatePicker(true)}
+              style={({ pressed }) => [
+                styles.optionRow,
+                pressed && { backgroundColor: T.bgCardRaised },
+              ]}
+            >
               <View style={styles.optionLeft}>
                 <View
                   style={[styles.iconBox, { backgroundColor: T.bgCardRaised }]}
@@ -399,19 +415,29 @@ export default function AddExpenseScreen() {
                   Data
                 </Text>
               </View>
-              <View
-                style={[styles.dateBadge, { backgroundColor: T.bgCardRaised }]}
-              >
-                <Text
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <View
                   style={[
-                    theme.textStyles.subheadline,
-                    { color: T.textSecondary },
+                    styles.dateBadge,
+                    { backgroundColor: T.bgCardRaised },
                   ]}
                 >
-                  {obterDataFormatada()}
-                </Text>
+                  <Text
+                    style={[
+                      theme.textStyles.subheadline,
+                      { color: T.textSecondary },
+                    ]}
+                  >
+                    {obterDataFormatada(expenseDate)}
+                  </Text>
+                </View>
+                <ChevronRight
+                  size={18}
+                  color={T.textSecondary}
+                  style={{ marginLeft: 8 }}
+                />
               </View>
-            </View>
+            </Pressable>
           </View>
 
           {/* SECÇÃO: DIVIDIR COM */}
@@ -651,6 +677,15 @@ export default function AddExpenseScreen() {
           </KeyboardAvoidingView>
         </View>
       </Modal>
+      <DatePickerModal
+        visible={showDatePicker}
+        currentDate={expenseDate}
+        onClose={() => setShowDatePicker(false)}
+        onConfirm={(date) => {
+          setExpenseDate(date);
+          setShowDatePicker(false);
+        }}
+      />
     </SafeAreaView>
   );
 }
