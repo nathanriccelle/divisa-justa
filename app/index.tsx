@@ -14,7 +14,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { HistoryEventCard } from "../src/components/HistoryEventCard";
 import { theme } from "../src/theme";
 
-// Importações do Banco de Dados
 import { useUser } from "@/src/contexts/UserContext";
 import { desc } from "drizzle-orm";
 import { db } from "../src/db";
@@ -65,10 +64,8 @@ export default function HomeScreen() {
     return <View style={{ flex: 1, backgroundColor: T.bgScreen }} />;
   if (hasOnboarded === false) return <Redirect href="/onboard" />;
 
-  // 👇 1. CABEÇALHO DA LISTA (Tudo que fica ACIMA dos eventos)
   const renderHeader = () => (
     <>
-      {/* CABEÇALHO SUPERIOR (Saudação) */}
       <View style={styles.header}>
         <View>
           <Text
@@ -85,7 +82,7 @@ export default function HomeScreen() {
         </Pressable>
       </View>
 
-      {/* CARTÃO PRINCIPAL (Começar Divisão) */}
+      {/* CARTÃO PRINCIPAL */}
       <View
         style={[
           styles.mainCard,
@@ -111,7 +108,7 @@ export default function HomeScreen() {
         >
           Começar Divisão
         </Text>
-        <Text style={[theme.textStyles.body, { color: T.textSecondary }]}>
+        <Text style={[theme.textStyles.headline, { color: T.textSecondary }]}>
           Crie uma nova conta compartilhada
         </Text>
       </View>
@@ -125,7 +122,7 @@ export default function HomeScreen() {
     </>
   );
 
-  // 👇 2. ESTADO VAZIO DA LISTA (Se não tiver eventos)
+  // 👇 ESTADO VAZIO DA LISTA
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <View
@@ -231,7 +228,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing[4],
   },
   sectionTitle: {
-    fontSize: theme.fontSize.xs,
+    fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.bold,
     fontFamily: "Inter_700Bold",
     letterSpacing: 1,

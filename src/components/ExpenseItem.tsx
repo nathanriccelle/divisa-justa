@@ -1,4 +1,4 @@
-import { Utensils } from "lucide-react-native";
+import { Receipt } from "lucide-react-native";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { theme } from "../theme";
@@ -33,18 +33,16 @@ export function ExpenseItem({
         pressed && { backgroundColor: T.bgCardRaised },
       ]}
     >
-      {/* Ícone (No futuro você pode mudar dependendo da categoria) */}
-      <View
-        style={[styles.iconBox, { backgroundColor: "rgba(255, 140, 0, 0.1)" }]}
-      >
-        <Utensils size={24} color="#FF8C00" />
+      {/* Ícone */}
+      <View style={[styles.iconBox, { backgroundColor: T.bgCardRaised }]}>
+        <Receipt size={24} color={T.primary} />
       </View>
 
       {/* Título e Quantidade */}
       <View style={styles.infoBox}>
         <Text
           style={[
-            theme.textStyles.body,
+            theme.textStyles.title3,
             { color: T.textPrimary, fontWeight: "bold" },
           ]}
         >

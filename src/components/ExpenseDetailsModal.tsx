@@ -92,7 +92,7 @@ export function ExpenseDetailsModal({
                 {
                   color: T.textPrimary,
                   textAlign: "center",
-                  marginBottom: theme.spacing[6],
+                  marginBottom: theme.spacing[4],
                 },
               ]}
             >
@@ -103,7 +103,7 @@ export function ExpenseDetailsModal({
             <View
               style={[
                 styles.infoCard,
-                { backgroundColor: T.bgCard, borderColor: T.border },
+                { backgroundColor: T.bg, borderColor: T.border },
               ]}
             >
               <Text
@@ -195,17 +195,17 @@ export function ExpenseDetailsModal({
                 style={({ pressed }) => [
                   styles.deleteButton,
                   {
-                    backgroundColor: T.negativeBg,
+                    backgroundColor: T.negative,
                     borderColor: T.negative,
                   },
                   pressed && { opacity: 0.7 },
                 ]}
               >
-                <Trash2 size={20} color={T.negative} />
+                <Trash2 size={24} color={T.bg} />
                 <Text
                   style={[
                     theme.textStyles.headline,
-                    { color: T.negative, marginLeft: theme.spacing[4] },
+                    { color: T.bg, marginLeft: theme.spacing[4] },
                   ]}
                 >
                   Excluir Item

@@ -4,7 +4,7 @@
 
 const palette = {
   // Neutros
-  black: "#111111", // fundo mais profundo
+  black: "#141416", // fundo mais profundo
   dark100: "#1A1C1A", // fundo principal de telas
   dark200: "#222422", // cards e seções
   dark300: "#2C2E2C", // cards elevados / inputs
@@ -14,14 +14,14 @@ const palette = {
   white: "#F4F4F4", // texto primário (não puro)
 
   // Lime green — cor primária da marca
-  lime: "#C5F135", // primário — botões, badges, destaques
-  limeDark: "#9EC02A", // pressed / hover
+  lime: "#BEFF6C", // primário — botões, badges, destaques
+  limeDark: "#BEFF6C", // pressed / hover
   limeSubtle: "#1E2910", // fundo sutil com tom lime (cards tintados)
 
   // Estados financeiros
   red: "#EF4444", // negativo
   redSubtle: "#2A0A0A", // fundo negativo
-  redText: "#FF8080", // texto negativo
+  redText: "#FF5A5A", // texto negativo
 } as const;
 
 // ─────────────────────────────────────────────

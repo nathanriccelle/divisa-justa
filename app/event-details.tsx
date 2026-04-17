@@ -1,5 +1,5 @@
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { ChevronLeft, MoreHorizontal, Plus } from "lucide-react-native";
+import { ChevronLeft, Plus, Trash2 } from "lucide-react-native";
 import React, { useCallback, useState } from "react";
 import {
   Alert,
@@ -164,7 +164,7 @@ export default function EventDetailsScreen() {
             pressed && { opacity: 0.7 },
           ]}
         >
-          <MoreHorizontal size={28} color={T.textPrimary} />
+          <Trash2 size={28} color={T.textPrimary} />
         </Pressable>
       </View>
 

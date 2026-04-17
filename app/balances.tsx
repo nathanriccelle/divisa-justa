@@ -1,23 +1,22 @@
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import {
-    Check,
-    ChevronLeft,
-    ChevronRight,
-    ConciergeBell,
-    Minus,
-    Plus,
-    Receipt,
-    Share,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  ConciergeBell,
+  Minus,
+  Plus,
+  Receipt,
 } from "lucide-react-native";
 import React, { useCallback, useState } from "react";
 import {
-    FlatList,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Switch,
-    Text,
-    View,
+  FlatList,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -143,7 +142,7 @@ export default function BalancesScreen() {
   const formatMoney = (val: number) =>
     `${currencySymbol} ${Math.abs(val).toFixed(2).replace(".", ",")}`;
 
-  // 👇 CABEÇALHO DA LISTA (Total Card + Tax Toggle + Título da Seção)
+  // 👇 CABEÇALHO DA LISTA
   const renderHeader = () => (
     <>
       <View
@@ -221,12 +220,7 @@ export default function BalancesScreen() {
           { backgroundColor: T.bgCard, borderColor: T.border },
         ]}
       >
-        <View
-          style={[
-            styles.iconBox,
-            { backgroundColor: "rgba(50, 205, 50, 0.1)" },
-          ]}
-        >
+        <View style={[styles.iconBox]}>
           <ConciergeBell size={20} color={T.primary} />
         </View>
 
@@ -309,21 +303,17 @@ export default function BalancesScreen() {
           }}
         >
           <ChevronLeft size={24} color={T.primary} />
-          <Text
-            style={[theme.textStyles.body, { color: T.primary, marginLeft: 4 }]}
-          >
-            Voltar
-          </Text>
         </Pressable>
-        <Text style={[theme.textStyles.title3, { color: T.textPrimary }]}>
+        <Text
+          style={[
+            theme.textStyles.title3,
+            { color: T.textPrimary, flex: 1, textAlign: "center" },
+          ]}
+        >
           Painel de Saldos
         </Text>
-        <Pressable style={{ padding: theme.spacing[2] }}>
-          <Share size={24} color={T.primary} />
-        </Pressable>
       </View>
 
-      {/* 👇 A PODEROSA FLATLIST! */}
       <FlatList
         style={styles.content}
         contentContainerStyle={{ paddingBottom: 100 }}

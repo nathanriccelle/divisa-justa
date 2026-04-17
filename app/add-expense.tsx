@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import {
   Calendar,
   Check,
+  ChevronLeft,
   ChevronRight,
   Minus,
   Plus,
@@ -164,7 +165,7 @@ export default function AddExpenseScreen() {
       await db.insert(expenses).values({
         id: `exp_${Date.now()}`,
         eventId: eventId,
-        payerId: payerId, // 👈 Agora usamos o pagante que o usuário escolheu!
+        payerId: payerId,
         title: title.trim(),
         amount: numericAmount,
         quantity: quantity,
@@ -185,9 +186,7 @@ export default function AddExpenseScreen() {
           onPress={() => router.back()}
           style={{ padding: theme.spacing[2] }}
         >
-          <Text style={[theme.textStyles.body, { color: T.primary }]}>
-            Cancelar
-          </Text>
+          <ChevronLeft size={28} color={T.primary} />
         </Pressable>
 
         <Text
@@ -202,19 +201,7 @@ export default function AddExpenseScreen() {
         <Pressable
           style={{ padding: theme.spacing[2] }}
           onPress={handleSaveExpense}
-        >
-          <Text
-            style={[
-              theme.textStyles.body,
-              {
-                color: title && amount ? T.primary : T.textDisabled,
-                fontWeight: "bold",
-              },
-            ]}
-          >
-            Salvar
-          </Text>
-        </Pressable>
+        ></Pressable>
       </View>
 
       <KeyboardAvoidingView

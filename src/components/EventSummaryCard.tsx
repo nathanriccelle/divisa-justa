@@ -91,7 +91,7 @@ export function EventSummaryCard({
           </View>
 
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <View style={[styles.badge, { backgroundColor: T.bgAccent }]}>
+            <View style={[styles.badge, { backgroundColor: T.bg }]}>
               <Text style={[theme.textStyles.footnote, { color: T.primary }]}>
                 {extraCount > 0
                   ? `+${extraCount} amigos`

@@ -263,7 +263,7 @@ export default function CreateEventScreen() {
               <Text style={[theme.textStyles.title3, { color: T.textPrimary }]}>
                 Participantes
               </Text>
-              <View style={[styles.badge, { backgroundColor: T.bgAccent }]}>
+              <View style={[styles.badge, { backgroundColor: T.bgCard }]}>
                 <Text style={[theme.textStyles.footnote, { color: T.primary }]}>
                   {participants.length}{" "}
                   {participants.length === 1 ? "pessoa" : "pessoas"}

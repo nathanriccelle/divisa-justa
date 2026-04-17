@@ -31,12 +31,7 @@ export function FinishEventModal({
           ]}
         >
           <View style={styles.header}>
-            <View
-              style={[
-                styles.iconWrapper,
-                { backgroundColor: "rgba(50, 205, 50, 0.15)" },
-              ]}
-            >
+            <View style={[styles.iconWrapper, { backgroundColor: T.bgCard }]}>
               <Calculator size={28} color={T.primary} />
             </View>
             <Pressable
