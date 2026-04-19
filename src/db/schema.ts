@@ -27,9 +27,7 @@ export const expenses = sqliteTable("expenses", {
   eventId: text("event_id")
     .notNull()
     .references(() => events.id, { onDelete: "cascade" }),
-  payerId: text("payer_id")
-    .notNull()
-    .references(() => participants.id, { onDelete: "cascade" }),
+  payerId: text("payer_id").notNull(),
 
   title: text("title").notNull(),
   amount: real("amount").notNull(),

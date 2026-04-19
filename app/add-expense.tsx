@@ -9,10 +9,12 @@ import {
   PlusCircle,
   Receipt,
   User,
+  Users,
   X,
 } from "lucide-react-native";
 import React, { useState } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -95,11 +97,11 @@ export default function AddExpenseScreen() {
   const [expenseDate, setExpenseDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const [payerId, setPayerId] = useState<string>(defaultPayer?.id || "");
+  const [payerIds, setPayerIds] = useState<string[]>([defaultPayer?.id || ""]);
   const [showPayerModal, setShowPayerModal] = useState(false); // Controla a janelinha
 
-  // Pegamos o objeto completo do pagante atual para mostrar na tela
-  const currentPayer = participants.find((p) => p.id === payerId);
+  const isMultiplePayers = payerIds.length > 1;
+  const firstPayer = participants.find((p) => p.id === `payerIds`);
 
   // Lista de quem vai dividir (todos marcados por padrão)
   const [splitWithIds, setSplitWithIds] = useState<string[]>(
@@ -114,6 +116,25 @@ export default function AddExpenseScreen() {
       setSplitWithIds(splitWithIds.filter((item) => item !== id));
     } else {
       setSplitWithIds([...splitWithIds, id]);
+    }
+  };
+
+  // função para alternar pagantes no modal
+  const togglePayer = (id: string) => {
+    if (payerIds.includes(id)) {
+      // Não deixa remover se for o último (a despesa precisa de pelo menos 1 pagante)
+      if (payerIds.length > 1) {
+        setPayerIds(payerIds.filter((item) => item !== id));
+      } else {
+        Alert.alert("Ops!", "A despesa precisa ter pelo menos um pagante.");
+      }
+    } else {
+      setPayerIds([...payerIds, id]);
+
+      // Magia de UX: Se a pessoa entrou como pagante, entra na divisão por padrão
+      if (!splitWithIds.includes(id)) {
+        setSplitWithIds([...splitWithIds, id]);
+      }
     }
   };
 
@@ -160,12 +181,12 @@ export default function AddExpenseScreen() {
       const numericAmount = parseFloat(amount.replace(",", "."));
       if (isNaN(numericAmount)) return;
 
-      if (!payerId) throw new Error("Pagante não selecionado");
+      if (!payerIds) throw new Error("Pagante não selecionado");
 
       await db.insert(expenses).values({
         id: `exp_${Date.now()}`,
         eventId: eventId,
-        payerId: payerId,
+        payerId: JSON.stringify(payerIds),
         title: title.trim(),
         amount: numericAmount,
         quantity: quantity,
@@ -330,7 +351,11 @@ export default function AddExpenseScreen() {
                 <View
                   style={[styles.iconBox, { backgroundColor: T.bgCardRaised }]}
                 >
-                  <User size={16} color={T.primary} />
+                  {isMultiplePayers ? (
+                    <Users size={16} color={T.primary} />
+                  ) : (
+                    <User size={16} color={T.primary} />
+                  )}
                 </View>
                 <Text
                   style={[
@@ -342,40 +367,58 @@ export default function AddExpenseScreen() {
                 </Text>
               </View>
 
-              {/* Lado Direito: Badge + Setinha */}
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <View style={styles.payerBadge}>
-                  <View
-                    style={[styles.miniAvatar, { backgroundColor: T.primary }]}
-                  >
+                {isMultiplePayers ? (
+                  <View style={styles.payerBadge}>
                     <Text
-                      style={{
-                        fontSize: 10,
-                        fontWeight: "bold",
-                        color: T.textOnLime,
-                      }}
+                      style={[
+                        theme.textStyles.subheadline,
+                        {
+                          color: T.primary,
+                          fontWeight: "bold",
+                          marginRight: 8,
+                        },
+                      ]}
                     >
-                      {currentPayer?.initials}
+                      {payerIds.length} pagantes
                     </Text>
                   </View>
-                  <Text
-                    style={[
-                      theme.textStyles.subheadline,
-                      {
-                        color: T.primary,
-                        fontWeight: "bold",
-                        marginLeft: 4,
-                        marginRight: 8,
-                      }, // Adicionei marginRight aqui
-                    ]}
-                  >
-                    {currentPayer?.id === defaultPayer?.id
-                      ? "Você"
-                      : currentPayer?.name}
-                  </Text>
-                </View>
+                ) : (
+                  <View style={styles.payerBadge}>
+                    <View
+                      style={[
+                        styles.miniAvatar,
+                        { backgroundColor: T.primary },
+                      ]}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 10,
+                          fontWeight: "bold",
+                          color: T.textOnLime,
+                        }}
+                      >
+                        {firstPayer?.initials}
+                      </Text>
+                    </View>
+                    <Text
+                      style={[
+                        theme.textStyles.subheadline,
+                        {
+                          color: T.primary,
+                          fontWeight: "bold",
+                          marginLeft: 4,
+                          marginRight: 8,
+                        },
+                      ]}
+                    >
+                      {firstPayer?.id === defaultPayer?.id
+                        ? "Você"
+                        : firstPayer?.name}
+                    </Text>
+                  </View>
+                )}
 
-                {/* 👈 A setinha mágica que mostra que é clicável! */}
                 <ChevronRight size={18} color={T.textSecondary} />
               </View>
             </Pressable>
@@ -438,18 +481,22 @@ export default function AddExpenseScreen() {
               DIVIDIR COM
             </Text>
 
-            {participants.map((person) => (
-              <ParticipantCheckbox
-                key={person.id}
-                name={person.name}
-                initials={person.initials}
-                isOwner={person.isOwner}
-                // 👇 5. MAGIA DA UX: A etiqueta "Pagante" acompanha dinamicamente quem está no payerId!
-                role={person.id === payerId ? "Pagante" : undefined}
-                isSelected={splitWithIds.includes(person.id)}
-                onToggle={() => toggleParticipant(person.id)}
-              />
-            ))}
+            {participants.map((person) => {
+              // Verifica se essa pessoa é UMA DAS pagantes
+              const isPayer = payerIds.includes(person.id);
+
+              return (
+                <ParticipantCheckbox
+                  key={person.id}
+                  name={person.name}
+                  initials={person.initials}
+                  isOwner={person.isOwner}
+                  role={isPayer ? "Pagante" : undefined}
+                  isSelected={splitWithIds.includes(person.id)}
+                  onToggle={() => toggleParticipant(person.id)}
+                />
+              );
+            })}
 
             <Pressable
               style={styles.addPersonBtn}
@@ -495,7 +542,7 @@ export default function AddExpenseScreen() {
         </Pressable>
       </View>
 
-      {/* 👇 6. O MODAL DE SELECIONAR QUEM PAGOU */}
+      {/* MODAL DE SELECIONAR QUEM PAGOU */}
       <Modal
         visible={showPayerModal}
         transparent
@@ -503,95 +550,129 @@ export default function AddExpenseScreen() {
         onRequestClose={() => setShowPayerModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View
-            style={[styles.modalContent, { backgroundColor: T.bgCardRaised }]}
+          <Pressable
+            style={styles.modalOverlay}
+            onPress={() => setShowPayerModal(false)}
           >
-            {/* Cabeçalho do Modal */}
-            <View style={[styles.modalHeader, { borderBottomColor: T.border }]}>
-              <Text style={[theme.textStyles.title3, { color: T.textPrimary }]}>
-                Quem pagou a conta?
-              </Text>
-              <Pressable
-                onPress={() => setShowPayerModal(false)}
-                style={({ pressed }) => [pressed && { opacity: 0.5 }]}
-              >
-                <X size={24} color={T.textSecondary} />
-              </Pressable>
-            </View>
-
-            {/* Lista de pessoas para escolher */}
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              style={{ maxHeight: 300 }}
+            <Pressable
+              style={[styles.modalContent, { backgroundColor: T.bgCardRaised }]}
+              onPress={() => {}}
             >
-              {participants.map((person) => {
-                const isSelected = person.id === payerId;
-                return (
-                  <Pressable
-                    key={person.id}
-                    onPress={() => {
-                      setPayerId(person.id); // Muda o pagante
+              <View
+                style={[styles.modalHeader, { borderBottomColor: T.border }]}
+              >
+                <Text
+                  style={[theme.textStyles.title3, { color: T.textPrimary }]}
+                >
+                  Quem pagou a conta?
+                </Text>
+                <Pressable
+                  onPress={() => setShowPayerModal(false)}
+                  style={({ pressed }) => [pressed && { opacity: 0.5 }]}
+                >
+                  <X size={24} color={T.textSecondary} />
+                </Pressable>
+              </View>
 
-                      // Dica de UX: Se a pessoa pagou, automaticamente marcamos ela na divisão de consumos (caso esteja desmarcada)
-                      if (!splitWithIds.includes(person.id)) {
-                        setSplitWithIds([...splitWithIds, person.id]);
-                      }
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                style={{ maxHeight: 300 }}
+              >
+                {participants.map((person) => {
+                  const isSelected = payerIds.includes(person.id);
 
-                      setShowPayerModal(false); // Fecha o modal
-                    }}
-                    style={({ pressed }) => [
-                      styles.payerOption,
-                      { borderBottomColor: T.border },
-                      pressed && { backgroundColor: T.bgCard },
-                    ]}
-                  >
-                    <View
-                      style={[
-                        styles.miniAvatar,
-                        {
-                          backgroundColor: isSelected ? T.primary : T.bgCard,
-                          width: 32,
-                          height: 32,
-                          marginRight: theme.spacing[3],
-                        },
+                  return (
+                    <Pressable
+                      key={person.id}
+                      onPress={() => togglePayer(person.id)}
+                      style={({ pressed }) => [
+                        styles.payerOption,
+                        { borderBottomColor: T.border },
+                        pressed && { backgroundColor: T.bgCard },
                       ]}
                     >
-                      <Text
+                      {/* Checkbox visual para os pagantes */}
+                      <View
                         style={[
-                          theme.textStyles.subheadline,
+                          styles.checkbox,
                           {
-                            fontWeight: "bold",
-                            color: isSelected ? T.textOnLime : T.textPrimary,
+                            borderColor: isSelected
+                              ? T.primary
+                              : T.textDisabled,
+                            backgroundColor: isSelected
+                              ? T.primary
+                              : "transparent",
                           },
                         ]}
                       >
-                        {person.initials}
+                        {isSelected && <Check size={14} color={T.textOnLime} />}
+                      </View>
+
+                      <View
+                        style={[
+                          styles.miniAvatar,
+                          {
+                            backgroundColor: T.bgCard,
+                            width: 32,
+                            height: 32,
+                            marginRight: theme.spacing[2],
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            theme.textStyles.subheadline,
+                            { fontWeight: "bold", color: T.textPrimary },
+                          ]}
+                        >
+                          {person.initials}
+                        </Text>
+                      </View>
+
+                      <Text
+                        style={[
+                          theme.textStyles.body,
+                          {
+                            color: T.textPrimary,
+                            flex: 1,
+                            fontWeight: isSelected ? "bold" : "normal",
+                          },
+                        ]}
+                      >
+                        {person.id === defaultPayer?.id
+                          ? "Você (Organizador)"
+                          : person.name}
                       </Text>
-                    </View>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
 
-                    <Text
-                      style={[
-                        theme.textStyles.body,
-                        {
-                          color: T.textPrimary,
-                          flex: 1,
-                          fontWeight: isSelected ? "bold" : "normal",
-                        },
-                      ]}
-                    >
-                      {person.id === defaultPayer?.id
-                        ? "Você (Organizador)"
-                        : person.name}
-                    </Text>
-
-                    {isSelected && <Check size={20} color={T.primary} />}
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          </View>
+              {/* Botão de Confirmar no final do modal */}
+              <View style={{ padding: theme.spacing[2] }}>
+                <Pressable
+                  onPress={() => setShowPayerModal(false)}
+                  style={({ pressed }) => [
+                    styles.mainButton,
+                    {
+                      height: 48,
+                      backgroundColor: pressed ? T.primaryPress : T.primary,
+                    },
+                    pressed && { transform: [{ scale: 0.98 }] },
+                  ]}
+                >
+                  <Text
+                    style={[theme.textStyles.headline, { color: T.textOnLime }]}
+                  >
+                    Confirmar Pagantes
+                  </Text>
+                </Pressable>
+              </View>
+            </Pressable>
+          </Pressable>
         </View>
       </Modal>
+
       <Modal
         visible={showAddPersonModal}
         transparent
@@ -815,5 +896,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: theme.spacing[4],
     borderBottomWidth: 1,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    marginRight: theme.spacing[4],
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

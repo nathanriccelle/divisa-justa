@@ -158,7 +158,7 @@ export default function HomeScreen() {
           ]}
         >
           Seu histórico está limpo. Que tal organizar aquele churrasco ou viagem
-          com os amigos? Toque no botão acima para começar.
+          com os amigos? Toque no botão "+" acima para começar.
         </Text>
       </View>
     </View>

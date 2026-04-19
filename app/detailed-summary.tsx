@@ -102,7 +102,9 @@ export default function DetailedSummaryScreen() {
         const consumersIds: string[] = JSON.parse(exp.splitWithIds);
         if (consumersIds.length === 0) return;
 
-        const payer = participantsMap.get(exp.payerId);
+        const payer = participantsMap.get(
+          JSON.parse(exp.payerId).includes("xyz"),
+        );
         const payerName = payer ? payer.name : "Alguém";
 
         const itemTotalWithTax = exp.amount * exp.quantity * multiplier;
@@ -118,7 +120,7 @@ export default function DetailedSummaryScreen() {
               portionAmount: portionAmount,
               splitCount: consumersIds.length,
               payerName: payerName,
-              isPayer: cid === exp.payerId,
+              isPayer: cid === JSON.parse(exp.payerId).includes("xyz"),
               date: dataFormatada,
             });
             summaries[cid].totalConsumed += portionAmount;
