@@ -1,0 +1,15 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm"
+  },
+  "home": {
+    "greeting": "Good morning, {{name}}",
+    "start_split": "Start Split",
+    "empty_state_title": "No events yet"
+  },
+  "event": {
+    "item_count_one": "{{count}} item",
+    "item_count_other": "{{count}} items"
+  }
+}

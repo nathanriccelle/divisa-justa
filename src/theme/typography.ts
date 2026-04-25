@@ -43,22 +43,22 @@ export const textStyles = {
     fontFamily: "Inter_600SemiBold",
   },
   body: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "400" as const,
     fontFamily: "Inter_400Regular",
   },
   callout: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "500" as const,
     fontFamily: "Inter_500Medium",
   },
   subheadline: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "400" as const,
     fontFamily: "Inter_400Regular",
   },
   footnote: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "400" as const,
     fontFamily: "Inter_400Regular",
   },

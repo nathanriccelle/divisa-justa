@@ -21,6 +21,7 @@ type ParticipantSummaryCardProps = {
   initials: string;
   consumedItems: ConsumedItemProps[];
   totalConsumed: number;
+  totalPaid: number;
   currencySymbol: string;
 };
 
@@ -29,10 +30,26 @@ export function ParticipantSummaryCard({
   initials,
   consumedItems,
   totalConsumed,
+  totalPaid,
   currencySymbol,
 }: ParticipantSummaryCardProps) {
   const formatMoney = (val: number) =>
     `${currencySymbol} ${val.toFixed(2).replace(".", ",")}`;
+
+  const balance = totalPaid - totalConsumed;
+  const isToReceive = balance > 0.001;
+  const isToPay = balance < -0.001;
+
+  let statusColor: string = T.textSecondary;
+  let statusText: string = "QUITADO";
+
+  if (isToReceive) {
+    statusColor = T.primary;
+    statusText = "A RECEBER";
+  } else if (isToPay) {
+    statusColor = T.negative;
+    statusText = "A PAGAR";
+  }
 
   return (
     <View
@@ -183,12 +200,40 @@ export function ParticipantSummaryCard({
 
       {/* RODAPÉ DO CARTÃO (TOTAL) */}
       <View style={[styles.footer, { backgroundColor: T.bgCardRaised }]}>
-        <Text style={[theme.textStyles.body, { color: T.textSecondary }]}>
-          Total Consumido
-        </Text>
-        <Text style={[theme.textStyles.title2, { color: T.primary }]}>
-          {formatMoney(totalConsumed)}
-        </Text>
+        <View style={styles.footerRow}>
+          <Text style={[theme.textStyles.body, { color: T.textSecondary }]}>
+            Total Consumido
+          </Text>
+          <Text style={[theme.textStyles.body, { color: T.textPrimary }]}>
+            {formatMoney(totalConsumed)}
+          </Text>
+        </View>
+        <View style={styles.footerRow}>
+          <Text style={[theme.textStyles.body, { color: T.textSecondary }]}>
+            Total Pago
+          </Text>
+          <Text style={[theme.textStyles.body, { color: T.textPrimary }]}>
+            {formatMoney(totalPaid)}
+          </Text>
+        </View>
+        <View
+          style={[
+            styles.footerRow,
+            {
+              marginTop: 8,
+              paddingTop: 8,
+              borderTopWidth: 1,
+              borderTopColor: T.border,
+            },
+          ]}
+        >
+          <Text style={[theme.textStyles.headline, { color: statusColor }]}>
+            {statusText}
+          </Text>
+          <Text style={[theme.textStyles.title2, { color: statusColor }]}>
+            {formatMoney(Math.abs(balance))}
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -225,11 +270,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   footer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
     padding: theme.spacing[4],
     borderTopWidth: 1,
     borderTopColor: T.border,
+  },
+  footerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
   },
 });

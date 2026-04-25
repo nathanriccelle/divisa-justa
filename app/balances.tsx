@@ -100,9 +100,20 @@ export default function BalancesScreen() {
         const expTotal = exp.amount * exp.quantity;
         baseTotal += expTotal;
 
-        if (statsMap[exp.payerId]) {
-          statsMap[exp.payerId].paid += expTotal;
+        let payerIds: string[] = [];
+        try {
+          const parsed = JSON.parse(exp.payerId);
+          payerIds = Array.isArray(parsed) ? parsed : [exp.payerId];
+        } catch {
+          payerIds = [exp.payerId];
         }
+
+        const paidPortion = expTotal / payerIds.length;
+        payerIds.forEach((pid) => {
+          if (statsMap[pid]) {
+            statsMap[pid].paid += paidPortion;
+          }
+        });
 
         const consumersIds: string[] = JSON.parse(exp.splitWithIds);
         if (consumersIds.length > 0) {
@@ -322,8 +333,8 @@ export default function BalancesScreen() {
         keyExtractor={(item) => item.id}
         ListHeaderComponent={renderHeader}
         renderItem={({ item: stat }) => {
-          const isToReceive = stat.balance > 0.01;
-          const isToPay = stat.balance < -0.01;
+          const isToReceive = stat.balance > 0.001;
+          const isToPay = stat.balance < -0.001;
           const isSettled = !isToReceive && !isToPay;
 
           let statusColor: string = T.textSecondary;

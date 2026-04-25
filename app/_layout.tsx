@@ -3,7 +3,9 @@ import { DarkTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { SQLiteProvider } from "expo-sqlite";
 import { theme } from "../src/theme";
-// Não precisa mais importar a criação do banco aqui!
+
+// Inicializa a configuração de internacionalização (i18n)
+import "../src/locales";
 
 const navigationTheme = {
   ...DarkTheme,

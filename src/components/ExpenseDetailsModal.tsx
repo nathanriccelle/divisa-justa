@@ -39,10 +39,21 @@ export function ExpenseDetailsModal({
   const consumerIds: string[] = JSON.parse(expense.splitWithIds);
   const costPerPerson = total / consumerIds.length;
 
-  const payer = participants.find((p) => p.id === expense.payerId);
+  let payerIds: string[] = [];
+  try {
+    const parsed = JSON.parse(expense.payerId);
+    payerIds = Array.isArray(parsed) ? parsed : [expense.payerId];
+  } catch {
+    payerIds = [expense.payerId];
+  }
+
+  const payers = participants.filter((p) => payerIds.includes(p.id));
+  const payerName =
+    payers.length > 0 ? payers.map((p) => p.name).join(", ") : "Desconhecido";
+
   // Pega todo mundo que consumiu, mas tira o pagante (pois ele não deve para ele mesmo)
   const debtors = participants.filter(
-    (p) => consumerIds.includes(p.id) && p.id !== expense.payerId,
+    (p) => consumerIds.includes(p.id) && !payerIds.includes(p.id),
   );
   const consumersNames = participants
     .filter((p) => consumerIds.includes(p.id))
@@ -75,7 +86,7 @@ export function ExpenseDetailsModal({
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={[styles.content, { backgroundColor: T.bgCardRaised }]}>
+        <View style={[styles.content, { backgroundColor: T.bgScreen }]}>
           <View style={[styles.header, { borderBottomColor: T.border }]}>
             <Text style={[theme.textStyles.title3, { color: T.textPrimary }]}>
               Detalhes do Item
@@ -100,12 +111,7 @@ export function ExpenseDetailsModal({
             </Text>
 
             {/* RESUMO RÁPIDO */}
-            <View
-              style={[
-                styles.infoCard,
-                { backgroundColor: T.bg, borderColor: T.border },
-              ]}
-            >
+            <View style={[styles.infoCard, { backgroundColor: T.bg }]}>
               <Text
                 style={[
                   theme.textStyles.body,
@@ -125,7 +131,7 @@ export function ExpenseDetailsModal({
               >
                 Pago por:{" "}
                 <Text style={{ color: T.primary, fontWeight: "bold" }}>
-                  {payer?.name}
+                  {payerName}
                 </Text>
               </Text>
               <Text style={[theme.textStyles.body, { color: T.textSecondary }]}>
@@ -140,41 +146,49 @@ export function ExpenseDetailsModal({
             </Text>
 
             {debtors.length > 0 ? (
-              debtors.map((debtor) => (
-                <View
-                  key={debtor.id}
-                  style={[styles.debtRow, { borderBottomColor: T.border }]}
-                >
-                  <Text
-                    style={[
-                      theme.textStyles.body,
-                      { color: T.textPrimary, fontWeight: "bold" },
-                    ]}
+              debtors.flatMap((debtor) => {
+                const payerList =
+                  payers.length > 0
+                    ? payers
+                    : [{ id: "unknown", name: "Desconhecido" }];
+                const splitAmount = costPerPerson / payerList.length;
+
+                return payerList.map((payer) => (
+                  <View
+                    key={`${debtor.id}-${payer.id}`}
+                    style={[styles.debtRow, { borderBottomColor: T.border }]}
                   >
-                    {debtor.name}
-                  </Text>
-                  <ArrowRight
-                    size={16}
-                    color={T.textSecondary}
-                    style={{ marginHorizontal: 8 }}
-                  />
-                  <Text
-                    style={[
-                      theme.textStyles.body,
-                      { color: T.primary, fontWeight: "bold" },
-                    ]}
-                  >
-                    {payer?.name}
-                  </Text>
-                  <View style={{ flex: 1 }} />
-                  <Text
-                    style={[theme.textStyles.headline, { color: T.negative }]}
-                  >
-                    {currencySymbol}{" "}
-                    {costPerPerson.toFixed(2).replace(".", ",")}
-                  </Text>
-                </View>
-              ))
+                    <Text
+                      style={[
+                        theme.textStyles.body,
+                        { color: T.textPrimary, fontWeight: "bold" },
+                      ]}
+                    >
+                      {debtor.name}
+                    </Text>
+                    <ArrowRight
+                      size={16}
+                      color={T.textSecondary}
+                      style={{ marginHorizontal: 8 }}
+                    />
+                    <Text
+                      style={[
+                        theme.textStyles.body,
+                        { color: T.primary, fontWeight: "bold" },
+                      ]}
+                    >
+                      {payer.name}
+                    </Text>
+                    <View style={{ flex: 1 }} />
+                    <Text
+                      style={[theme.textStyles.headline, { color: T.negative }]}
+                    >
+                      {currencySymbol}{" "}
+                      {splitAmount.toFixed(2).replace(".", ",")}
+                    </Text>
+                  </View>
+                ));
+              })
             ) : (
               <Text
                 style={[
@@ -186,7 +200,11 @@ export function ExpenseDetailsModal({
                   },
                 ]}
               >
-                {payer?.name} pagou e consumiu sozinho. Ninguém deve nada!
+                {payerName}{" "}
+                {payers.length > 1
+                  ? "pagaram juntos e não geraram dívidas aqui"
+                  : "pagou e consumiu sozinho"}
+                . Ninguém deve nada!
               </Text>
             )}
             {onDelete && (
@@ -237,7 +255,9 @@ const styles = StyleSheet.create({
     padding: theme.spacing[6],
     borderBottomWidth: 1,
   },
-  body: { padding: theme.spacing[6] },
+  body: {
+    padding: theme.spacing[6],
+  },
   infoCard: {
     padding: theme.spacing[4],
     borderRadius: theme.borderRadius.lg,

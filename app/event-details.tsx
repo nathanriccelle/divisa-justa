@@ -196,9 +196,32 @@ export default function EventDetailsScreen() {
           ) : (
             <View>
               {eventExpenses.map((expense) => {
-                const payer = eventParticipants.find(
-                  (p) => p.id === expense.payerId,
-                );
+                let payerName = "Desconhecido";
+                try {
+                  // Tenta interpretar o payerId como um array (que é como o add-expense salva)
+                  const payerIds = JSON.parse(expense.payerId);
+                  if (Array.isArray(payerIds)) {
+                    if (payerIds.length === 1) {
+                      const p = eventParticipants.find(
+                        (p) => p.id === payerIds[0],
+                      );
+                      if (p) payerName = p.name;
+                    } else if (payerIds.length > 1) {
+                      payerName = `${payerIds.length} pessoas`;
+                    }
+                  } else {
+                    const p = eventParticipants.find(
+                      (p) => p.id === expense.payerId,
+                    );
+                    if (p) payerName = p.name;
+                  }
+                } catch {
+                  // Se falhar o parse (dado antigo salvo como string simples)
+                  const p = eventParticipants.find(
+                    (p) => p.id === expense.payerId,
+                  );
+                  if (p) payerName = p.name;
+                }
 
                 return (
                   <ExpenseItem
@@ -207,7 +230,7 @@ export default function EventDetailsScreen() {
                     amount={expense.amount}
                     quantity={expense.quantity}
                     currencySymbol={currencySymbol}
-                    payerName={payer?.name || "Desconhecido"}
+                    payerName={payerName}
                     onPress={() => setSelectedExpense(expense)}
                   />
                 );
@@ -225,9 +248,7 @@ export default function EventDetailsScreen() {
         onClose={() => setSelectedExpense(null)}
         onDelete={async (id) => {
           try {
-            //Apaga permanentemente do banco de dados (usando o ID)
             await db.delete(expenses).where(eq(expenses.id, id));
-            // ATENÇÃO: Troque "setEventExpenses" pelo nome exato do seu "setEstado" da lista!
             setEventExpenses((prev) => prev.filter((item) => item.id !== id));
             setSelectedExpense(null);
           } catch (error) {

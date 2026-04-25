@@ -1,12 +1,12 @@
 import { CreditCard, ShoppingBag, X } from "lucide-react-native";
 import React from "react";
 import {
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { theme } from "../theme";
 
@@ -25,6 +25,8 @@ type ParticipantStats = {
   id: string;
   name: string;
   initials: string;
+  paid: number;
+  consumed: number;
   balance: number;
 };
 
@@ -47,31 +49,55 @@ export function ParticipantStatementModal({
 }: ParticipantStatementModalProps) {
   if (!participant) return null;
 
-  // 1. Filtra o que a pessoa CONSUMIU
   const consumedExpenses = allExpenses.filter((exp) => {
     const consumers: string[] = JSON.parse(exp.splitWithIds);
     return consumers.includes(participant.id);
   });
 
-  // 2. Filtra o que a pessoa PAGOU
-  const paidExpenses = allExpenses.filter(
-    (exp) => exp.payerId === participant.id,
-  );
+  const paidExpenses = allExpenses.filter((exp) => {
+    try {
+      const payerIds = JSON.parse(exp.payerId);
+      if (Array.isArray(payerIds)) {
+        return payerIds.includes(participant.id);
+      }
+      return exp.payerId === participant.id;
+    } catch {
+      return exp.payerId === participant.id;
+    }
+  });
+
+  // Soma exatamente os itens da lista de consumo
+  const localConsumed = consumedExpenses.reduce((acc, exp) => {
+    const consumers: string[] = JSON.parse(exp.splitWithIds);
+    return acc + (exp.amount * exp.quantity * taxMultiplier) / consumers.length;
+  }, 0);
+
+  // Soma exatamente os itens da lista de contas pagas
+  const localPaid = paidExpenses.reduce((acc, exp) => {
+    let payerCount = 1;
+    try {
+      const parsed = JSON.parse(exp.payerId);
+      if (Array.isArray(parsed)) payerCount = parsed.length;
+    } catch {}
+    return acc + (exp.amount * exp.quantity * taxMultiplier) / payerCount;
+  }, 0);
+
+  const localBalance = localPaid - localConsumed;
 
   const formatMoney = (val: number) =>
     `${currencySymbol} ${val.toFixed(2).replace(".", ",")}`;
 
-  const isToReceive = participant.balance > 0.01;
-  const isToPay = participant.balance < -0.01;
+  const isToReceive = localBalance > 0.001;
+  const isToPay = localBalance < -0.001;
   let statusColor: string = T.textSecondary;
-  let statusText: string = "QUITADO (R$ 0,00)";
+  let statusLabel: string = "QUITADO";
 
   if (isToReceive) {
     statusColor = T.primary;
-    statusText = `A RECEBER ${formatMoney(participant.balance)}`;
+    statusLabel = "A RECEBER";
   } else if (isToPay) {
     statusColor = T.negative;
-    statusText = `A PAGAR ${formatMoney(Math.abs(participant.balance))}`;
+    statusLabel = "A PAGAR";
   }
 
   return (
@@ -82,22 +108,12 @@ export function ParticipantStatementModal({
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={[styles.content, { backgroundColor: T.bgCardRaised }]}>
+        <View style={[styles.content, { backgroundColor: T.bgScreen }]}>
           {/* CABEÇALHO DO MODAL */}
           <View style={[styles.header, { borderBottomColor: T.border }]}>
-            <View>
-              <Text style={[theme.textStyles.title3, { color: T.textPrimary }]}>
-                Extrato de {participant.name}
-              </Text>
-              <Text
-                style={[
-                  theme.textStyles.headline,
-                  { color: statusColor, marginTop: 4 },
-                ]}
-              >
-                {statusText}
-              </Text>
-            </View>
+            <Text style={[theme.textStyles.title3, { color: T.textPrimary }]}>
+              Extrato de {participant.name}
+            </Text>
             <Pressable
               onPress={onClose}
               style={({ pressed }) => [
@@ -114,6 +130,71 @@ export function ParticipantStatementModal({
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 40 }}
           >
+            {/* RESUMO FINANCEIRO */}
+            <View
+              style={[
+                styles.card,
+                {
+                  backgroundColor: T.bgCardRaised,
+                  borderColor: T.border,
+                  padding: theme.spacing[4],
+                  marginBottom: theme.spacing[8],
+                },
+              ]}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  marginBottom: 8,
+                }}
+              >
+                <Text
+                  style={[theme.textStyles.body, { color: T.textSecondary }]}
+                >
+                  Total Consumido
+                </Text>
+                <Text style={[theme.textStyles.body, { color: T.textPrimary }]}>
+                  {formatMoney(localConsumed)}
+                </Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  marginBottom: 8,
+                }}
+              >
+                <Text
+                  style={[theme.textStyles.body, { color: T.textSecondary }]}
+                >
+                  Total Pago
+                </Text>
+                <Text style={[theme.textStyles.body, { color: T.textPrimary }]}>
+                  {formatMoney(localPaid)}
+                </Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  paddingTop: 8,
+                  borderTopWidth: 1,
+                  borderTopColor: T.border,
+                  marginTop: 4,
+                }}
+              >
+                <Text
+                  style={[theme.textStyles.headline, { color: statusColor }]}
+                >
+                  {statusLabel}
+                </Text>
+                <Text style={[theme.textStyles.title2, { color: statusColor }]}>
+                  {formatMoney(Math.abs(localBalance))}
+                </Text>
+              </View>
+            </View>
+
             {/* SEÇÃO: O QUE CONSUMIU */}
             <View style={styles.section}>
               <View style={styles.sectionTitleRow}>
@@ -137,12 +218,7 @@ export function ParticipantStatementModal({
                   Não consumiu nada.
                 </Text>
               ) : (
-                <View
-                  style={[
-                    styles.card,
-                    { backgroundColor: T.bgCard, borderColor: T.border },
-                  ]}
-                >
+                <View style={[styles.card, { backgroundColor: T.bgCard }]}>
                   {consumedExpenses.map((exp, index) => {
                     const consumers: string[] = JSON.parse(exp.splitWithIds);
                     const totalItemValue =
@@ -208,7 +284,7 @@ export function ParticipantStatementModal({
                   style={[
                     theme.textStyles.body,
                     {
-                      color: T.textDisabled,
+                      color: T.textSecondary,
                       fontStyle: "italic",
                       marginTop: 8,
                     },
@@ -217,15 +293,16 @@ export function ParticipantStatementModal({
                   Não pagou nenhuma conta.
                 </Text>
               ) : (
-                <View
-                  style={[
-                    styles.card,
-                    { backgroundColor: T.bgCard, borderColor: T.border },
-                  ]}
-                >
+                <View style={[styles.card, { backgroundColor: T.bgCard }]}>
                   {paidExpenses.map((exp, index) => {
+                    let payerCount = 1;
+                    try {
+                      const parsed = JSON.parse(exp.payerId);
+                      if (Array.isArray(parsed)) payerCount = parsed.length;
+                    } catch {}
+
                     const totalItemValue =
-                      exp.amount * exp.quantity * taxMultiplier;
+                      (exp.amount * exp.quantity * taxMultiplier) / payerCount;
                     const isLast = index === paidExpenses.length - 1;
 
                     return (
@@ -239,18 +316,30 @@ export function ParticipantStatementModal({
                           },
                         ]}
                       >
-                        <Text
-                          style={[
-                            theme.textStyles.body,
-                            {
-                              color: T.textPrimary,
-                              fontWeight: "bold",
-                              flex: 1,
-                            },
-                          ]}
-                        >
-                          {exp.title}
-                        </Text>
+                        <View style={{ flex: 1 }}>
+                          <Text
+                            style={[
+                              theme.textStyles.body,
+                              {
+                                color: T.textPrimary,
+                                fontWeight: "bold",
+                              },
+                            ]}
+                          >
+                            {exp.title}
+                          </Text>
+                          {payerCount > 1 && (
+                            <Text
+                              style={[
+                                theme.textStyles.footnote,
+                                { color: T.textSecondary, marginTop: 2 },
+                              ]}
+                            >
+                              Dividido com {payerCount - 1}{" "}
+                              {payerCount - 1 === 1 ? "pessoa" : "pessoas"}
+                            </Text>
+                          )}
+                        </View>
                         <Text
                           style={[
                             theme.textStyles.headline,

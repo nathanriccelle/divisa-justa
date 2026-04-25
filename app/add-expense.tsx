@@ -98,10 +98,10 @@ export default function AddExpenseScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const [payerIds, setPayerIds] = useState<string[]>([defaultPayer?.id || ""]);
-  const [showPayerModal, setShowPayerModal] = useState(false); // Controla a janelinha
+  const [showPayerModal, setShowPayerModal] = useState(false);
 
   const isMultiplePayers = payerIds.length > 1;
-  const firstPayer = participants.find((p) => p.id === `payerIds`);
+  const firstPayer = participants.find((p) => p.id === payerIds[0]);
 
   // Lista de quem vai dividir (todos marcados por padrão)
   const [splitWithIds, setSplitWithIds] = useState<string[]>(
