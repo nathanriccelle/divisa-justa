@@ -1,12 +1,13 @@
 import { X } from "lucide-react-native";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import {
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { theme } from "../theme";
 
@@ -30,6 +31,8 @@ export function ParticipantsModal({
   participants,
   onClose,
 }: ParticipantsModalProps) {
+  const { t } = useTranslation();
+
   return (
     <Modal
       visible={visible}
@@ -45,7 +48,7 @@ export function ParticipantsModal({
           {/* CABEÇALHO */}
           <View style={[styles.header, { borderBottomColor: T.border }]}>
             <Text style={[theme.textStyles.title3, { color: T.textPrimary }]}>
-              Galera do Evento
+              {t("participants_modal.title")}
             </Text>
             <Pressable
               onPress={onClose}
@@ -103,7 +106,7 @@ export function ParticipantsModal({
                         { color: T.textSecondary },
                       ]}
                     >
-                      Organizador(a)
+                      {t("participants_modal.organizer")}
                     </Text>
                   )}
                 </View>

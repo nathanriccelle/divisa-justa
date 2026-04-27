@@ -1,5 +1,6 @@
 import { Receipt } from "lucide-react-native";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { theme } from "../theme";
 
@@ -22,6 +23,7 @@ export function ExpenseItem({
   currencySymbol,
   onPress,
 }: ExpenseItemProps) {
+  const { t } = useTranslation();
   const total = amount * quantity;
 
   return (
@@ -66,7 +68,8 @@ export function ExpenseItem({
               { color: T.textSecondary, marginLeft: theme.spacing[2] },
             ]}
           >
-            {currencySymbol} {amount.toFixed(2).replace(".", ",")}/un
+            {currencySymbol} {amount.toFixed(2).replace(".", ",")}
+            {t("expense_item.per_unit")}
           </Text>
         </View>
       </View>
@@ -77,7 +80,8 @@ export function ExpenseItem({
           {currencySymbol} {total.toFixed(2).replace(".", ",")}
         </Text>
         <Text style={[theme.textStyles.footnote, { color: T.textSecondary }]}>
-          Pago por <Text style={{ color: T.primary }}>{payerName}</Text>
+          {t("expense_item.paid_by")}
+          <Text style={{ color: T.primary }}>{payerName}</Text>
         </Text>
       </View>
     </Pressable>

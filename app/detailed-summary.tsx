@@ -23,6 +23,7 @@ import { db } from "../src/db";
 import { events, expenses, participants } from "../src/db/schema";
 import { theme } from "../src/theme";
 
+import { useTranslation } from "react-i18next";
 import {
   ConsumedItemProps,
   ParticipantSummaryCard,
@@ -39,34 +40,39 @@ type ParticipantSummary = {
   totalPaid: number;
 };
 
-const formatarDataCurta = (dataBanco: any) => {
-  if (!dataBanco) return "";
-  const d = new Date(dataBanco);
-  const dia = d.getDate().toString().padStart(2, "0");
-  const meses = [
-    "Jan",
-    "Fev",
-    "Mar",
-    "Abr",
-    "Mai",
-    "Jun",
-    "Jul",
-    "Ago",
-    "Set",
-    "Out",
-    "Nov",
-    "Dez",
-  ];
-  return `${dia} ${meses[d.getMonth()]}`;
-};
-
 export default function DetailedSummaryScreen() {
-  const { eventId, taxMultiplier } = useLocalSearchParams<{
+  const { t, i18n } = useTranslation();
+  const {
+    eventId,
+    taxMultiplier,
+    taxPerPerson: taxPerPersonParam,
+    taxOptOutIds: taxOptOutIdsParam,
+    assumptions,
+  } = useLocalSearchParams<{
     eventId: string;
     taxMultiplier: string;
+    taxPerPerson: string;
+    taxOptOutIds: string;
+    assumptions: string;
   }>();
 
-  const multiplier = parseFloat(taxMultiplier || "1");
+  const formatarDataCurta = (dataBanco: any) => {
+    if (!dataBanco) return "";
+    const d = new Date(dataBanco);
+    return d.toLocaleDateString(i18n.language, {
+      day: "2-digit",
+      month: "short",
+    });
+  };
+
+  const effectiveTaxMultiplier = parseFloat(taxMultiplier || "1");
+  const parsedTaxPerPerson = parseFloat(taxPerPersonParam || "0");
+  const parsedOptOutIds: string[] = taxOptOutIdsParam
+    ? JSON.parse(taxOptOutIdsParam)
+    : [];
+  const parsedAssumptions: Record<string, string> = assumptions
+    ? JSON.parse(assumptions)
+    : {};
 
   const [currencySymbol, setCurrencySymbol] = useState("R$");
   const [eventName, setEventName] = useState("");
@@ -129,9 +135,10 @@ export default function DetailedSummaryScreen() {
         const payerName =
           payers.length > 0
             ? payers.map((p) => p.name).join(", ")
-            : "Desconhecido";
+            : t("detailed_summary.unknown");
 
-        const itemTotalWithTax = exp.amount * exp.quantity * multiplier;
+        const itemTotalWithTax =
+          exp.amount * exp.quantity * effectiveTaxMultiplier;
 
         const paidPortion = itemTotalWithTax / payerIds.length;
         payerIds.forEach((pid) => {
@@ -140,7 +147,8 @@ export default function DetailedSummaryScreen() {
           }
         });
 
-        const portionAmount = itemTotalWithTax / consumersIds.length;
+        const itemTotalBase = exp.amount * exp.quantity;
+        const portionAmount = itemTotalBase / consumersIds.length;
 
         const dataFormatada = formatarDataCurta(exp.date);
 
@@ -150,6 +158,7 @@ export default function DetailedSummaryScreen() {
               id: exp.id,
               title: exp.title,
               portionAmount: portionAmount,
+              totalItemAmount: itemTotalBase,
               splitCount: consumersIds.length,
               payerName: payerName,
               isPayer: payerIds.includes(cid),
@@ -158,6 +167,49 @@ export default function DetailedSummaryScreen() {
             summaries[cid].totalConsumed += portionAmount;
           }
         });
+      });
+
+      // Injona a fatia igualitária da Taxa de Serviço na lista individual
+      if (parsedTaxPerPerson > 0) {
+        const taxSplitCount = participantsData.length - parsedOptOutIds.length;
+        const totalTaxAmount = parsedTaxPerPerson * taxSplitCount;
+        participantsData.forEach((p) => {
+          if (summaries[p.id] && !parsedOptOutIds.includes(p.id)) {
+            summaries[p.id].consumedItems.push({
+              id: `tax_${p.id}`,
+              title: t("balances.service_fee"),
+              portionAmount: parsedTaxPerPerson,
+              totalItemAmount: totalTaxAmount,
+              splitCount: taxSplitCount,
+              payerName: "-",
+              isPayer: false,
+              date: "-",
+            });
+            summaries[p.id].totalConsumed += parsedTaxPerPerson;
+          }
+        });
+      }
+
+      // Aplica a mesclagem de contas para os que assumiram as dívidas dos outros
+      Object.entries(parsedAssumptions).forEach(([assumeeId, assumerId]) => {
+        const assumee = summaries[assumeeId];
+        const assumer = summaries[assumerId];
+        if (assumee && assumer) {
+          assumer.totalConsumed += assumee.totalConsumed;
+          assumer.totalPaid += assumee.totalPaid;
+
+          assumee.consumedItems.forEach((item) => {
+            assumer.consumedItems.push({
+              ...item,
+              id: `${item.id}_${assumeeId}`,
+              assumedFromName: assumee.name,
+            });
+          });
+
+          assumee.totalConsumed = 0;
+          assumee.totalPaid = 0;
+          assumee.consumedItems = [];
+        }
       });
 
       setSummaryData(Object.values(summaries));
@@ -262,7 +314,7 @@ export default function DetailedSummaryScreen() {
                 `,
                         )
                         .join("")
-                    : '<div style="color: #64748b; font-style: italic;">Ninguém deve nada. Tudo resolvido! 🎉</div>'
+                    : `<div style="color: #64748b; font-style: italic;">${t("detailed_summary.all_settled")}</div>`
                 }
               </div>
 
@@ -277,34 +329,38 @@ export default function DetailedSummaryScreen() {
                       : "neutral";
                 const statusText =
                   balance > 0.001
-                    ? "A RECEBER"
+                    ? t("detailed_summary.to_receive")
                     : balance < -0.001
-                      ? "A PAGAR"
-                      : "QUITADO";
+                      ? t("detailed_summary.to_pay")
+                      : t("detailed_summary.settled");
 
                 let itemsHtml =
                   p.consumedItems.length > 0
                     ? p.consumedItems
-                        .map(
-                          (item) => `
+                        .map((item) => {
+                          const assumedHtml = item.assumedFromName
+                            ? `<span class="item-split" style="color: #8b5cf6; font-weight: 600; margin-top: 4px;">Assumido de ${item.assumedFromName}</span>`
+                            : "";
+                          return `
                     <div class="item">
                       <div class="item-title">
-                        ${item.title} ${item.splitCount > 1 ? `<span class="item-split">Dividido por ${item.splitCount}</span>` : ""}
+                        ${item.title} ${item.splitCount > 1 ? `<span class="item-split">${t("detailed_summary.divided_by", { count: item.splitCount })} • ${t("participant_summary_card.total_item", { amount: `${currencySymbol} ${item.totalItemAmount.toFixed(2).replace(".", ",")}` })}</span>` : ""}
+                        ${assumedHtml}
                       </div>
                       <div style="font-weight: 600;">${currencySymbol} ${item.portionAmount.toFixed(2).replace(".", ",")}</div>
                     </div>
-                  `,
-                        )
+                  `;
+                        })
                         .join("")
-                    : `<div class="item"><span>Nenhum item consumido</span></div>`;
+                    : `<div class="item"><span>${t("detailed_summary.no_items_consumed")}</span></div>`;
 
                 return `
                 <div class="participant">
                   <div class="header">${p.name}</div>
                   ${itemsHtml}
                   <div class="totals">
-                    <div><span>Total Consumido</span> <span>${currencySymbol} ${p.totalConsumed.toFixed(2).replace(".", ",")}</span></div>
-                    <div><span>Total Pago</span> <span>${currencySymbol} ${p.totalPaid.toFixed(2).replace(".", ",")}</span></div>
+                    <div><span>${t("detailed_summary.total_consumed")}</span> <span>${currencySymbol} ${p.totalConsumed.toFixed(2).replace(".", ",")}</span></div>
+                    <div><span>${t("detailed_summary.total_paid")}</span> <span>${currencySymbol} ${p.totalPaid.toFixed(2).replace(".", ",")}</span></div>
                     <div class="balance ${statusColor}"><span>${statusText}</span> <span>${currencySymbol} ${Math.abs(balance).toFixed(2).replace(".", ",")}</span></div>
                   </div>
                 </div>
@@ -322,7 +378,7 @@ export default function DetailedSummaryScreen() {
       if (isAvailable) {
         await Sharing.shareAsync(uri, {
           mimeType: "application/pdf",
-          dialogTitle: `Resumo da Divisão - ${eventName}`,
+          dialogTitle: t("detailed_summary.pdf_share_title", { eventName }),
           UTI: "com.adobe.pdf", // Identificador de tipo de arquivo no iOS
         });
       }
@@ -347,7 +403,7 @@ export default function DetailedSummaryScreen() {
               { color: T.textPrimary, marginLeft: theme.spacing[3] },
             ]}
           >
-            Quem paga quem?
+            {t("detailed_summary.who_pays_who")}
           </Text>
         </View>
 
@@ -405,7 +461,7 @@ export default function DetailedSummaryScreen() {
               },
             ]}
           >
-            Ninguém deve nada. Tudo resolvido! 🎉
+            {t("detailed_summary.all_settled")}
           </Text>
         )}
       </View>
@@ -423,7 +479,7 @@ export default function DetailedSummaryScreen() {
           },
         ]}
       >
-        RESUMO INDIVIDUAL
+        {t("detailed_summary.individual_summary")}
       </Text>
     </View>
   );
@@ -448,7 +504,7 @@ export default function DetailedSummaryScreen() {
             { color: T.textPrimary, flex: 1, textAlign: "center" },
           ]}
         >
-          Resumo Detalhado
+          {t("detailed_summary.title")}
         </Text>
 
         <View style={{ width: 44 }} />
@@ -491,7 +547,7 @@ export default function DetailedSummaryScreen() {
             style={{ marginRight: theme.spacing[2] }}
           />
           <Text style={[theme.textStyles.headline, { color: T.textOnLime }]}>
-            Exportar Resumo em PDF
+            {t("detailed_summary.export_pdf")}
           </Text>
         </Pressable>
       </View>

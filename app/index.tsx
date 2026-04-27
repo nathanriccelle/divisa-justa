@@ -19,25 +19,30 @@ import { desc } from "drizzle-orm";
 import { db } from "../src/db";
 import { events } from "../src/db/schema";
 
+//TRADUÇÂO
+import { useTranslation } from "react-i18next";
+
 const T = theme.colors;
 
-function obterSaudacao() {
+function getGreetingPeriod() {
   const horaAtual = new Date().getHours();
-  if (horaAtual >= 0 && horaAtual < 12) return "Bom dia";
-  if (horaAtual >= 12 && horaAtual < 18) return "Boa tarde";
-  return "Boa noite";
+  if (horaAtual >= 0 && horaAtual < 12) return "morning";
+  if (horaAtual >= 12 && horaAtual < 18) return "afternoon";
+  return "night";
 }
 
 type EventData = {
   id: string;
   name: string;
-  createdAt: Date;
+  currencySymbol: string;
+  createdAt: string | Date;
 };
 
 export default function HomeScreen() {
-  const saudacao = obterSaudacao();
+  const period = getGreetingPeriod();
   const [historyEvents, setHistoryEvents] = useState<EventData[]>([]);
-  const { userName, hasOnboarded, clearData } = useUser();
+  const { userName, hasOnboarded } = useUser();
+  const { t } = useTranslation();
 
   const fetchHistory = async () => {
     try {
@@ -74,12 +79,22 @@ export default function HomeScreen() {
               { color: T.textSecondary, marginBottom: theme.spacing[1] },
             ]}
           >
-            {saudacao}, {userName || "Amigo"}
+            {t(`home.greeting_${period}`, {
+              name: userName || t("home.friend"),
+            })}
           </Text>
         </View>
-        <Pressable onPress={clearData}>
-          <Settings size={theme.spacing[8]} color={T.textSecondary} />
-        </Pressable>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: theme.spacing[4],
+          }}
+        >
+          <Pressable onPress={() => router.push("/settings")}>
+            <Settings size={24} color={T.textSecondary} />
+          </Pressable>
+        </View>
       </View>
 
       {/* CARTÃO PRINCIPAL */}
@@ -106,17 +121,17 @@ export default function HomeScreen() {
             { color: T.textPrimary, marginBottom: theme.spacing[2] },
           ]}
         >
-          Começar Divisão
+          {t("home.start_split")}
         </Text>
         <Text style={[theme.textStyles.headline, { color: T.textSecondary }]}>
-          Crie uma nova conta compartilhada
+          {t("home.create_new_split")}
         </Text>
       </View>
 
       {/* TÍTULO DA SEÇÃO DE HISTÓRICO */}
       <View style={styles.historySection}>
         <Text style={[styles.sectionTitle, { color: T.textDisabled }]}>
-          EVENTOS EM ANDAMENTO
+          {t("home.ongoing_events")}
         </Text>
       </View>
     </>
@@ -149,7 +164,7 @@ export default function HomeScreen() {
             },
           ]}
         >
-          Nenhum evento ainda
+          {t("home.empty_state_title")}
         </Text>
         <Text
           style={[
@@ -157,8 +172,7 @@ export default function HomeScreen() {
             { color: T.textSecondary, textAlign: "center", lineHeight: 22 },
           ]}
         >
-          Seu histórico está limpo. Que tal organizar aquele churrasco ou viagem
-          com os amigos? Toque no botão "+" acima para começar.
+          {t("home.empty_state_desc")}
         </Text>
       </View>
     </View>
@@ -178,7 +192,7 @@ export default function HomeScreen() {
           <View style={{ paddingHorizontal: theme.spacing[6] }}>
             <HistoryEventCard
               name={item.name}
-              date={item.createdAt}
+              date={new Date(item.createdAt)}
               onPress={() => {
                 router.push({
                   pathname: "/event-details",

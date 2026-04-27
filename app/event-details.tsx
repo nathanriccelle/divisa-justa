@@ -20,6 +20,7 @@ import { FinishEventModal } from "../src/components/FinishEventModal";
 import { theme } from "../src/theme";
 
 import { eq } from "drizzle-orm";
+import { useTranslation } from "react-i18next";
 import { db } from "../src/db";
 import { events, expenses, participants } from "../src/db/schema";
 
@@ -43,8 +44,9 @@ type ExpenseType = {
 
 export default function EventDetailsScreen() {
   const { eventId } = useLocalSearchParams<{ eventId: string }>();
+  const { t } = useTranslation();
 
-  const [eventName, setEventName] = useState("Carregando...");
+  const [eventName, setEventName] = useState("");
   const [currencySymbol, setCurrencySymbol] = useState("R$");
   const [eventParticipants, setEventParticipants] = useState<ParticipantType[]>(
     [],
@@ -108,15 +110,15 @@ export default function EventDetailsScreen() {
   // 👇 2. FUNÇÃO DE EXCLUSÃO COM CONFIRMAÇÃO
   const handleDeleteEvent = () => {
     Alert.alert(
-      "Excluir Evento",
-      "Tem certeza que deseja apagar este evento? Todas as despesas e a lista de participantes serão apagadas permanentemente.",
+      t("event_details.delete_event_title"),
+      t("event_details.delete_event_desc"),
       [
         {
-          text: "Cancelar",
+          text: t("common.cancel"),
           style: "cancel", // No iOS, esse botão fica com estilo amigável
         },
         {
-          text: "Sim, excluir",
+          text: t("event_details.delete_confirm"),
           style: "destructive", // No iOS, o texto fica vermelho!
           onPress: async () => {
             try {
@@ -126,7 +128,10 @@ export default function EventDetailsScreen() {
               router.push("/");
             } catch (error) {
               console.error("Erro ao apagar evento:", error);
-              Alert.alert("Erro", "Não foi possível apagar o evento.");
+              Alert.alert(
+                t("event_details.error_title"),
+                t("event_details.delete_error"),
+              );
             }
           },
         },
@@ -154,7 +159,7 @@ export default function EventDetailsScreen() {
           ]}
           numberOfLines={1}
         >
-          {eventName}
+          {eventName || t("event_details.loading")}
         </Text>
 
         <Pressable
@@ -183,11 +188,10 @@ export default function EventDetailsScreen() {
         <View style={styles.itemsSection}>
           <View style={styles.itemsHeader}>
             <Text style={[styles.sectionTitle, { color: T.textDisabled }]}>
-              ITENS ADICIONADOS
+              {t("event_details.added_items")}
             </Text>
             <Text style={[theme.textStyles.footnote, { color: T.primary }]}>
-              {eventExpenses.length}{" "}
-              {eventExpenses.length === 1 ? "item" : "itens"}
+              {t("event.item_count", { count: eventExpenses.length })}
             </Text>
           </View>
 
@@ -196,7 +200,7 @@ export default function EventDetailsScreen() {
           ) : (
             <View>
               {eventExpenses.map((expense) => {
-                let payerName = "Desconhecido";
+                let payerName = t("event_details.unknown");
                 try {
                   // Tenta interpretar o payerId como um array (que é como o add-expense salva)
                   const payerIds = JSON.parse(expense.payerId);
@@ -207,7 +211,9 @@ export default function EventDetailsScreen() {
                       );
                       if (p) payerName = p.name;
                     } else if (payerIds.length > 1) {
-                      payerName = `${payerIds.length} pessoas`;
+                      payerName = t("event_details.multiple_people", {
+                        count: payerIds.length,
+                      });
                     }
                   } else {
                     const p = eventParticipants.find(
@@ -216,7 +222,6 @@ export default function EventDetailsScreen() {
                     if (p) payerName = p.name;
                   }
                 } catch {
-                  // Se falhar o parse (dado antigo salvo como string simples)
                   const p = eventParticipants.find(
                     (p) => p.id === expense.payerId,
                   );
@@ -254,8 +259,8 @@ export default function EventDetailsScreen() {
           } catch (error) {
             console.error("Erro ao excluir item:", error);
             Alert.alert(
-              "Ops!",
-              "Ocorreu um erro ao tentar excluir esta despesa.",
+              t("event_details.oops"),
+              t("event_details.delete_expense_error"),
             );
           }
         }}

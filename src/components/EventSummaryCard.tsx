@@ -1,10 +1,8 @@
-// Caminho: src/components/EventSummaryCard.tsx
 import { CheckCircle2, ChevronRight } from "lucide-react-native";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { theme } from "../theme";
-
-// 👇 1. Importamos o modal novo e o tipo de Participante que criamos lá!
 import { Participant, ParticipantsModal } from "./ParticipantsModal";
 
 const T = theme.colors;
@@ -22,7 +20,8 @@ export function EventSummaryCard({
   participants,
   onFinishEvent,
 }: EventSummaryCardProps) {
-  // O Estado continua aqui para dizer quando a janelinha abre ou fecha
+  const { t } = useTranslation();
+
   const [showParticipantsModal, setShowParticipantsModal] = useState(false);
 
   const displayAvatars = participants.slice(0, 3);
@@ -40,7 +39,7 @@ export function EventSummaryCard({
           <Text
             style={[theme.textStyles.subheadline, { color: T.textSecondary }]}
           >
-            Total do Evento
+            {t("event_summary.total_event")}
           </Text>
         </View>
 
@@ -94,8 +93,10 @@ export function EventSummaryCard({
             <View style={[styles.badge, { backgroundColor: T.bg }]}>
               <Text style={[theme.textStyles.footnote, { color: T.primary }]}>
                 {extraCount > 0
-                  ? `+${extraCount} amigos`
-                  : `${participants.length} pessoas`}
+                  ? t("event_summary.extra_friends", { count: extraCount })
+                  : t("event_summary.people_count", {
+                      count: participants.length,
+                    })}
               </Text>
             </View>
             <ChevronRight
@@ -121,7 +122,7 @@ export function EventSummaryCard({
             style={{ marginRight: 8 }}
           />
           <Text style={[theme.textStyles.headline, { color: T.textOnLime }]}>
-            Encerrar Divisão
+            {t("event_summary.finish_split")}
           </Text>
         </Pressable>
       </View>

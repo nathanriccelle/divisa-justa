@@ -1,5 +1,6 @@
 import { CreditCard, ShoppingBag, X } from "lucide-react-native";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import {
   Modal,
   Pressable,
@@ -36,6 +37,8 @@ type ParticipantStatementModalProps = {
   allExpenses: ExpenseType[];
   currencySymbol: string;
   taxMultiplier: number;
+  taxPerPerson: number;
+  isPayingTax: boolean;
   onClose: () => void;
 };
 
@@ -45,8 +48,11 @@ export function ParticipantStatementModal({
   allExpenses,
   currencySymbol,
   taxMultiplier,
+  taxPerPerson,
+  isPayingTax,
   onClose,
 }: ParticipantStatementModalProps) {
+  const { t } = useTranslation();
   if (!participant) return null;
 
   const consumedExpenses = allExpenses.filter((exp) => {
@@ -66,11 +72,13 @@ export function ParticipantStatementModal({
     }
   });
 
-  // Soma exatamente os itens da lista de consumo
-  const localConsumed = consumedExpenses.reduce((acc, exp) => {
+  // Soma exatamente os itens da lista de consumo SEM A TAXA primeiro
+  const baseConsumed = consumedExpenses.reduce((acc, exp) => {
     const consumers: string[] = JSON.parse(exp.splitWithIds);
-    return acc + (exp.amount * exp.quantity * taxMultiplier) / consumers.length;
+    return acc + (exp.amount * exp.quantity) / consumers.length;
   }, 0);
+  const taxConsumedAmount = isPayingTax ? taxPerPerson : 0;
+  const localConsumed = baseConsumed + taxConsumedAmount;
 
   // Soma exatamente os itens da lista de contas pagas
   const localPaid = paidExpenses.reduce((acc, exp) => {
@@ -90,14 +98,14 @@ export function ParticipantStatementModal({
   const isToReceive = localBalance > 0.001;
   const isToPay = localBalance < -0.001;
   let statusColor: string = T.textSecondary;
-  let statusLabel: string = "QUITADO";
+  let statusLabel: string = t("participant_statement_modal.settled");
 
   if (isToReceive) {
     statusColor = T.primary;
-    statusLabel = "A RECEBER";
+    statusLabel = t("participant_statement_modal.to_receive");
   } else if (isToPay) {
     statusColor = T.negative;
-    statusLabel = "A PAGAR";
+    statusLabel = t("participant_statement_modal.to_pay");
   }
 
   return (
@@ -112,7 +120,9 @@ export function ParticipantStatementModal({
           {/* CABEÇALHO DO MODAL */}
           <View style={[styles.header, { borderBottomColor: T.border }]}>
             <Text style={[theme.textStyles.title3, { color: T.textPrimary }]}>
-              Extrato de {participant.name}
+              {t("participant_statement_modal.title", {
+                name: participant.name,
+              })}
             </Text>
             <Pressable
               onPress={onClose}
@@ -142,6 +152,52 @@ export function ParticipantStatementModal({
                 },
               ]}
             >
+              {/* MOSTRAR TAXA SEPARADA SE HOUVER */}
+              {taxMultiplier > 1 && (
+                <>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      marginBottom: 4,
+                    }}
+                  >
+                    <Text
+                      style={[
+                        theme.textStyles.body,
+                        { color: T.textSecondary },
+                      ]}
+                    >
+                      {t("participant_statement_modal.subtotal_consumed")}
+                    </Text>
+                    <Text
+                      style={[theme.textStyles.body, { color: T.textPrimary }]}
+                    >
+                      {formatMoney(baseConsumed)}
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      marginBottom: 8,
+                    }}
+                  >
+                    <Text
+                      style={[
+                        theme.textStyles.body,
+                        { color: T.textSecondary },
+                      ]}
+                    >
+                      {t("participant_statement_modal.service_fee")}
+                    </Text>
+                    <Text style={[theme.textStyles.body, { color: T.primary }]}>
+                      {formatMoney(taxConsumedAmount)}
+                    </Text>
+                  </View>
+                </>
+              )}
+
               <View
                 style={{
                   flexDirection: "row",
@@ -150,11 +206,26 @@ export function ParticipantStatementModal({
                 }}
               >
                 <Text
-                  style={[theme.textStyles.body, { color: T.textSecondary }]}
+                  style={[
+                    theme.textStyles.body,
+                    {
+                      color:
+                        taxMultiplier > 1 ? T.textPrimary : T.textSecondary,
+                      fontWeight: taxMultiplier > 1 ? "bold" : "normal",
+                    },
+                  ]}
                 >
-                  Total Consumido
+                  {t("participant_statement_modal.total_consumed")}
                 </Text>
-                <Text style={[theme.textStyles.body, { color: T.textPrimary }]}>
+                <Text
+                  style={[
+                    theme.textStyles.body,
+                    {
+                      color: T.textPrimary,
+                      fontWeight: taxMultiplier > 1 ? "bold" : "normal",
+                    },
+                  ]}
+                >
                   {formatMoney(localConsumed)}
                 </Text>
               </View>
@@ -168,7 +239,7 @@ export function ParticipantStatementModal({
                 <Text
                   style={[theme.textStyles.body, { color: T.textSecondary }]}
                 >
-                  Total Pago
+                  {t("participant_statement_modal.total_paid")}
                 </Text>
                 <Text style={[theme.textStyles.body, { color: T.textPrimary }]}>
                   {formatMoney(localPaid)}
@@ -200,7 +271,7 @@ export function ParticipantStatementModal({
               <View style={styles.sectionTitleRow}>
                 <ShoppingBag size={18} color={T.textSecondary} />
                 <Text style={[styles.sectionTitle, { color: T.textSecondary }]}>
-                  ITENS CONSUMIDOS
+                  {t("participant_statement_modal.consumed_items")}
                 </Text>
               </View>
 
@@ -215,14 +286,13 @@ export function ParticipantStatementModal({
                     },
                   ]}
                 >
-                  Não consumiu nada.
+                  {t("participant_statement_modal.no_consumed")}
                 </Text>
               ) : (
                 <View style={[styles.card, { backgroundColor: T.bgCard }]}>
                   {consumedExpenses.map((exp, index) => {
                     const consumers: string[] = JSON.parse(exp.splitWithIds);
-                    const totalItemValue =
-                      exp.amount * exp.quantity * taxMultiplier;
+                    const totalItemValue = exp.amount * exp.quantity;
                     const portionValue = totalItemValue / consumers.length;
                     const isLast = index === consumedExpenses.length - 1;
 
@@ -252,7 +322,9 @@ export function ParticipantStatementModal({
                               { color: T.textSecondary, marginTop: 2 },
                             ]}
                           >
-                            Dividido por {consumers.length}
+                            {t("participant_statement_modal.divided_by", {
+                              count: consumers.length,
+                            })}
                           </Text>
                         </View>
                         <Text
@@ -275,7 +347,7 @@ export function ParticipantStatementModal({
               <View style={styles.sectionTitleRow}>
                 <CreditCard size={18} color={T.primary} />
                 <Text style={[styles.sectionTitle, { color: T.primary }]}>
-                  CONTAS QUE PAGOU
+                  {t("participant_statement_modal.paid_bills")}
                 </Text>
               </View>
 
@@ -290,7 +362,7 @@ export function ParticipantStatementModal({
                     },
                   ]}
                 >
-                  Não pagou nenhuma conta.
+                  {t("participant_statement_modal.no_paid")}
                 </Text>
               ) : (
                 <View style={[styles.card, { backgroundColor: T.bgCard }]}>
@@ -335,8 +407,9 @@ export function ParticipantStatementModal({
                                 { color: T.textSecondary, marginTop: 2 },
                               ]}
                             >
-                              Dividido com {payerCount - 1}{" "}
-                              {payerCount - 1 === 1 ? "pessoa" : "pessoas"}
+                              {t("participant_statement_modal.divided_with", {
+                                count: payerCount - 1,
+                              })}
                             </Text>
                           )}
                         </View>

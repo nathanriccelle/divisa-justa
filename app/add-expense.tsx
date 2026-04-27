@@ -28,6 +28,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { DatePickerModal } from "@/src/components/DatePickerModal";
+import { useTranslation } from "react-i18next";
 import { ParticipantCheckbox } from "../src/components/ParticipantCheckbox";
 import { theme } from "../src/theme";
 
@@ -43,41 +44,28 @@ type Participant = {
   isOwner: boolean;
 };
 
-const obterDataFormatada = (dataParaFormatar: Date) => {
-  const dia = dataParaFormatar.getDate();
-  const meses = [
-    "Jan",
-    "Fev",
-    "Mar",
-    "Abr",
-    "Mai",
-    "Jun",
-    "Jul",
-    "Ago",
-    "Set",
-    "Out",
-    "Nov",
-    "Dez",
-  ];
-
-  // Verifica se a data escolhida é exatamente hoje
-  const hoje = new Date();
-  const isHoje =
-    dataParaFormatar.getDate() === hoje.getDate() &&
-    dataParaFormatar.getMonth() === hoje.getMonth() &&
-    dataParaFormatar.getFullYear() === hoje.getFullYear();
-
-  return isHoje
-    ? `Hoje, ${dia} ${meses[dataParaFormatar.getMonth()]}`
-    : `${dia} ${meses[dataParaFormatar.getMonth()]}`;
-};
-
 export default function AddExpenseScreen() {
+  const { t, i18n } = useTranslation();
   const { participantsStr, currencySymbol, eventId } = useLocalSearchParams<{
     participantsStr: string;
     currencySymbol: string;
     eventId: string;
   }>();
+
+  const obterDataFormatada = (dataParaFormatar: Date) => {
+    const hoje = new Date();
+    const isHoje =
+      dataParaFormatar.getDate() === hoje.getDate() &&
+      dataParaFormatar.getMonth() === hoje.getMonth() &&
+      dataParaFormatar.getFullYear() === hoje.getFullYear();
+
+    const formatada = dataParaFormatar.toLocaleDateString(i18n.language, {
+      day: "numeric",
+      month: "short",
+    });
+
+    return isHoje ? `${t("add_expense.today")}, ${formatada}` : formatada;
+  };
 
   const initialParticipants: Participant[] = participantsStr
     ? JSON.parse(participantsStr)
@@ -126,7 +114,7 @@ export default function AddExpenseScreen() {
       if (payerIds.length > 1) {
         setPayerIds(payerIds.filter((item) => item !== id));
       } else {
-        Alert.alert("Ops!", "A despesa precisa ter pelo menos um pagante.");
+        Alert.alert(t("add_expense.oops"), t("add_expense.min_payer_error"));
       }
     } else {
       setPayerIds([...payerIds, id]);
@@ -216,7 +204,7 @@ export default function AddExpenseScreen() {
             { color: T.textPrimary, fontWeight: "bold" },
           ]}
         >
-          Adicionar Despesa
+          {t("add_expense.title")}
         </Text>
 
         <Pressable
@@ -236,7 +224,7 @@ export default function AddExpenseScreen() {
         >
           <View style={styles.inputGroup}>
             <Text style={[styles.label, { color: T.textSecondary }]}>
-              Título do Item
+              {t("add_expense.item_title_label")}
             </Text>
             <View
               style={[
@@ -251,7 +239,7 @@ export default function AddExpenseScreen() {
               />
               <TextInput
                 style={[styles.textInput, { color: T.textPrimary }]}
-                placeholder="Ex: Jantar, Gasolina"
+                placeholder={t("add_expense.item_title_placeholder")}
                 placeholderTextColor={T.textDisabled}
                 value={title}
                 onChangeText={setTitle}
@@ -261,7 +249,7 @@ export default function AddExpenseScreen() {
 
           <View style={styles.inputGroup}>
             <Text style={[styles.label, { color: T.textSecondary }]}>
-              Valor Unitário
+              {t("add_expense.unit_value_label")}
             </Text>
             <View
               style={[
@@ -308,7 +296,7 @@ export default function AddExpenseScreen() {
                     { color: T.textPrimary, fontWeight: "bold" },
                   ]}
                 >
-                  Quantidade
+                  {t("add_expense.quantity_label")}
                 </Text>
               </View>
               <View style={styles.qtySelector}>
@@ -363,7 +351,7 @@ export default function AddExpenseScreen() {
                     { color: T.textPrimary, fontWeight: "bold" },
                   ]}
                 >
-                  Quem pagou?
+                  {t("add_expense.who_paid_label")}
                 </Text>
               </View>
 
@@ -380,7 +368,9 @@ export default function AddExpenseScreen() {
                         },
                       ]}
                     >
-                      {payerIds.length} pagantes
+                      {t("add_expense.multiple_payers", {
+                        count: payerIds.length,
+                      })}
                     </Text>
                   </View>
                 ) : (
@@ -413,7 +403,7 @@ export default function AddExpenseScreen() {
                       ]}
                     >
                       {firstPayer?.id === defaultPayer?.id
-                        ? "Você"
+                        ? t("add_expense.you")
                         : firstPayer?.name}
                     </Text>
                   </View>
@@ -442,7 +432,7 @@ export default function AddExpenseScreen() {
                     { color: T.textPrimary, fontWeight: "bold" },
                   ]}
                 >
-                  Data
+                  {t("add_expense.date_label")}
                 </Text>
               </View>
               <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -478,7 +468,7 @@ export default function AddExpenseScreen() {
                 { color: T.textDisabled, marginBottom: theme.spacing[4] },
               ]}
             >
-              DIVIDIR COM
+              {t("add_expense.split_with_label")}
             </Text>
 
             {participants.map((person) => {
@@ -491,7 +481,7 @@ export default function AddExpenseScreen() {
                   name={person.name}
                   initials={person.initials}
                   isOwner={person.isOwner}
-                  role={isPayer ? "Pagante" : undefined}
+                  role={isPayer ? t("add_expense.payer_role") : undefined}
                   isSelected={splitWithIds.includes(person.id)}
                   onToggle={() => toggleParticipant(person.id)}
                 />
@@ -513,7 +503,7 @@ export default function AddExpenseScreen() {
                   },
                 ]}
               >
-                Adicionar nova pessoa
+                {t("add_expense.add_person_btn")}
               </Text>
             </Pressable>
           </View>
@@ -537,7 +527,7 @@ export default function AddExpenseScreen() {
             style={{ marginRight: theme.spacing[2] }}
           />
           <Text style={[theme.textStyles.headline, { color: T.textOnLime }]}>
-            Salvar Item
+            {t("add_expense.save_item_btn")}
           </Text>
         </Pressable>
       </View>
@@ -564,7 +554,7 @@ export default function AddExpenseScreen() {
                 <Text
                   style={[theme.textStyles.title3, { color: T.textPrimary }]}
                 >
-                  Quem pagou a conta?
+                  {t("add_expense.who_paid_modal_title")}
                 </Text>
                 <Pressable
                   onPress={() => setShowPayerModal(false)}
@@ -640,7 +630,7 @@ export default function AddExpenseScreen() {
                         ]}
                       >
                         {person.id === defaultPayer?.id
-                          ? "Você (Organizador)"
+                          ? t("add_expense.you_organizer")
                           : person.name}
                       </Text>
                     </Pressable>
@@ -664,7 +654,7 @@ export default function AddExpenseScreen() {
                   <Text
                     style={[theme.textStyles.headline, { color: T.textOnLime }]}
                   >
-                    Confirmar Pagantes
+                    {t("add_expense.confirm_payers_btn")}
                   </Text>
                 </Pressable>
               </View>
@@ -714,7 +704,7 @@ export default function AddExpenseScreen() {
                 />
                 <TextInput
                   style={[styles.textInput, { color: T.textPrimary }]}
-                  placeholder="Nome do participante"
+                  placeholder={t("add_expense.person_name_placeholder")}
                   placeholderTextColor={T.textDisabled}
                   value={newPersonName}
                   onChangeText={setNewPersonName}
@@ -738,7 +728,7 @@ export default function AddExpenseScreen() {
                 <Text
                   style={[theme.textStyles.headline, { color: T.textOnLime }]}
                 >
-                  Adicionar
+                  {t("add_expense.add_btn")}
                 </Text>
               </Pressable>
             </View>

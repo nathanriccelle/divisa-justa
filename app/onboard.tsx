@@ -2,6 +2,7 @@ import { useUser } from "@/src/contexts/UserContext";
 import { router } from "expo-router";
 import { ArrowRight, Check } from "lucide-react-native";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Alert,
   Image,
@@ -48,6 +49,7 @@ const CURRENCIES = [
 ];
 
 export default function OnboardScreen() {
+  const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const [userName, setUserName] = useState("");
   const [selectedCurrencyCode, setSelectedCurrencyCode] = useState("BRL");
@@ -104,13 +106,15 @@ export default function OnboardScreen() {
           {step === 1 && (
             <View style={styles.stepContainer}>
               <Text style={[styles.title, { color: T.textPrimary }]}>
-                Dividir a conta nunca foi tão{" "}
-                <Text style={{ color: T.primary }}>justo</Text>.
+                {t("onboard.title_part1")}
+                <Text style={{ color: T.primary }}>
+                  {t("onboard.title_highlight")}
+                </Text>
+                {t("onboard.title_part2")}
               </Text>
 
               <Text style={[styles.subtitle, { color: T.textSecondary }]}>
-                Crie eventos, adicione despesas e saiba exatamente quem deve
-                para quem. Sem matemática complicada, sem estresse.
+                {t("onboard.subtitle")}
               </Text>
 
               <View style={{ flex: 1 }} />
@@ -132,7 +136,7 @@ export default function OnboardScreen() {
                     { color: T.textOnLime, marginRight: theme.spacing[4] },
                   ]}
                 >
-                  Começar agora
+                  {t("onboard.start_now")}
                 </Text>
                 <ArrowRight size={20} color={T.textOnLime} />
               </Pressable>

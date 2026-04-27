@@ -4,15 +4,20 @@ import {
   ChevronLeft,
   ChevronRight,
   ConciergeBell,
+  HeartHandshake,
   Minus,
   Plus,
   Receipt,
+  Users,
+  X,
 } from "lucide-react-native";
 import React, { useCallback, useState } from "react";
 import {
   FlatList,
+  Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Switch,
   Text,
@@ -26,6 +31,8 @@ import { events, expenses, participants } from "../src/db/schema";
 import { theme } from "../src/theme";
 
 import { ParticipantStatementModal } from "@/src/components/ParticipantStatementModal";
+import { useTranslation } from "react-i18next";
+import { ParticipantCheckbox } from "../src/components/ParticipantCheckbox";
 
 const T = theme.colors;
 
@@ -49,6 +56,7 @@ type ExpenseType = {
 
 export default function BalancesScreen() {
   const { eventId } = useLocalSearchParams<{ eventId: string }>();
+  const { t } = useTranslation();
 
   const [currencySymbol, setCurrencySymbol] = useState("R$");
   const [isTaxEnabled, setIsTaxEnabled] = useState(false);
@@ -60,6 +68,16 @@ export default function BalancesScreen() {
   const [allExpenses, setAllExpenses] = useState<ExpenseType[]>([]);
   const [selectedParticipant, setSelectedParticipant] =
     useState<ParticipantStats | null>(null);
+
+  const [showTaxModal, setShowTaxModal] = useState(false);
+  const [taxOptOutIds, setTaxOptOutIds] = useState<string[]>([]);
+  const [absorbTax, setAbsorbTax] = useState(false);
+
+  // NOVO: Estados para Assumir Contas
+  const [assumptions, setAssumptions] = useState<Record<string, string>>({});
+  const [showAssumeModal, setShowAssumeModal] = useState(false);
+  const [newAssumerId, setNewAssumerId] = useState<string | null>(null);
+  const [newAssumeeId, setNewAssumeeId] = useState<string | null>(null);
 
   const fetchBalances = async () => {
     if (!eventId) return;
@@ -137,18 +155,55 @@ export default function BalancesScreen() {
     }, [eventId]),
   );
 
-  const taxMultiplier = isTaxEnabled ? 1 + taxPercentage / 100 : 1.0;
-  const finalTotal = totalBase * taxMultiplier;
-  const taxAmount = finalTotal - totalBase;
+  const originalTaxAmount = isTaxEnabled
+    ? totalBase * (taxPercentage / 100)
+    : 0;
+  const totalPeople = userStats.length;
+  const payingPeopleCount = Math.max(0, totalPeople - taxOptOutIds.length);
 
-  const finalStats = userStats.map((stat) => {
-    const finalPaid = stat.paid * taxMultiplier;
-    const finalConsumed = stat.consumed * taxMultiplier;
+  let finalTaxAmount = 0;
+  let taxPerPerson = 0;
+
+  if (isTaxEnabled && payingPeopleCount > 0) {
+    if (absorbTax) finalTaxAmount = originalTaxAmount;
+    else finalTaxAmount = originalTaxAmount * (payingPeopleCount / totalPeople);
+    taxPerPerson = finalTaxAmount / payingPeopleCount;
+  }
+
+  const effectiveTaxMultiplier =
+    totalBase > 0 ? 1 + finalTaxAmount / totalBase : 1;
+  const finalTotal = totalBase + finalTaxAmount;
+
+  const processedStats = userStats.map((stat) => {
+    const finalPaid = stat.paid * effectiveTaxMultiplier;
+    const isPayingTax = isTaxEnabled && !taxOptOutIds.includes(stat.id);
+    const finalConsumed = stat.consumed + (isPayingTax ? taxPerPerson : 0);
     const balance = finalPaid - finalConsumed;
-    return { ...stat, paid: finalPaid, consumed: finalConsumed, balance };
+    return {
+      ...stat,
+      paid: finalPaid,
+      consumed: finalConsumed,
+      balance,
+      isAssumedBy: null as string | null,
+    };
   });
 
-  finalStats.sort((a, b) => b.balance - a.balance);
+  Object.entries(assumptions).forEach(([assumeeId, assumerId]) => {
+    const assumee = processedStats.find((s) => s.id === assumeeId);
+    const assumer = processedStats.find((s) => s.id === assumerId);
+    if (assumee && assumer) {
+      assumer.consumed += assumee.consumed;
+      assumer.paid += assumee.paid;
+      assumer.balance = assumer.paid - assumer.consumed;
+
+      assumee.consumed = 0;
+      assumee.paid = 0;
+      assumee.balance = 0;
+      assumee.isAssumedBy = assumerId;
+    }
+  });
+
+  const finalStats = [...processedStats].sort((a, b) => b.balance - a.balance);
 
   const formatMoney = (val: number) =>
     `${currencySymbol} ${Math.abs(val).toFixed(2).replace(".", ",")}`;
@@ -168,7 +223,7 @@ export default function BalancesScreen() {
             { color: T.textSecondary, letterSpacing: 1 },
           ]}
         >
-          TOTAL DA CONTA
+          {t("balances.total_bill")}
         </Text>
         <Text
           style={[
@@ -192,7 +247,7 @@ export default function BalancesScreen() {
                 { color: T.textSecondary, fontWeight: "bold" },
               ]}
             >
-              CONSUMIDO
+              {t("balances.consumed")}
             </Text>
             <Text
               style={[
@@ -211,7 +266,9 @@ export default function BalancesScreen() {
                 { color: T.primary, fontWeight: "bold" },
               ]}
             >
-              TAXA {isTaxEnabled ? `${taxPercentage}%` : "0%"}
+              {t("balances.tax", {
+                percentage: isTaxEnabled ? taxPercentage : 0,
+              })}
             </Text>
             <Text
               style={[
@@ -219,7 +276,7 @@ export default function BalancesScreen() {
                 { color: T.primary, marginTop: 2 },
               ]}
             >
-              {formatMoney(taxAmount)}
+              {formatMoney(finalTaxAmount)}
             </Text>
           </View>
         </View>
@@ -231,73 +288,153 @@ export default function BalancesScreen() {
           { backgroundColor: T.bgCard, borderColor: T.border },
         ]}
       >
-        <View style={[styles.iconBox]}>
-          <ConciergeBell size={20} color={T.primary} />
-        </View>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View style={[styles.iconBox, { backgroundColor: T.bgCardRaised }]}>
+            <ConciergeBell size={20} color={T.primary} />
+          </View>
 
-        <View style={{ flex: 1, marginLeft: theme.spacing[3] }}>
-          <Text style={[theme.textStyles.headline, { color: T.textPrimary }]}>
-            Taxa de Serviço
-          </Text>
-          <Text style={[theme.textStyles.footnote, { color: T.textSecondary }]}>
-            {isTaxEnabled ? `Ativada (${taxPercentage}%)` : "Desativada"}
-          </Text>
+          <View style={{ flex: 1, marginLeft: theme.spacing[3] }}>
+            <Text style={[theme.textStyles.headline, { color: T.textPrimary }]}>
+              {t("balances.service_fee")}
+            </Text>
+            <Text
+              style={[theme.textStyles.footnote, { color: T.textSecondary }]}
+            >
+              {isTaxEnabled
+                ? t("balances.tax_enabled", {
+                    percentage: taxPercentage,
+                    amount: formatMoney(finalTaxAmount),
+                  })
+                : t("balances.tax_disabled")}
+            </Text>
+          </View>
+
+          <View style={{ marginLeft: theme.spacing[3] }}>
+            <Switch
+              value={isTaxEnabled}
+              onValueChange={setIsTaxEnabled}
+              trackColor={{ false: T.border, true: T.primary }}
+              thumbColor={Platform.OS === "ios" ? "#FFF" : "#FFF"}
+            />
+          </View>
         </View>
 
         {isTaxEnabled && (
-          <View style={styles.stepperContainer}>
+          <View
+            style={{
+              marginTop: theme.spacing[4],
+              paddingTop: theme.spacing[4],
+              borderTopWidth: 1,
+              borderTopColor: T.border,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <View style={styles.stepperContainer}>
+              <Pressable
+                onPress={() => setTaxPercentage((p) => Math.max(0, p - 1))}
+                style={({ pressed }) => [
+                  styles.stepperBtn,
+                  { borderColor: T.border, backgroundColor: T.bgCardRaised },
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <Minus size={14} color={T.textPrimary} />
+              </Pressable>
+              <Text
+                style={[
+                  theme.textStyles.subheadline,
+                  {
+                    color: T.textPrimary,
+                    marginHorizontal: 12,
+                    fontWeight: "bold",
+                  },
+                ]}
+              >
+                {taxPercentage}%
+              </Text>
+              <Pressable
+                onPress={() => setTaxPercentage((p) => p + 1)}
+                style={({ pressed }) => [
+                  styles.stepperBtn,
+                  { borderColor: T.border, backgroundColor: T.bgCardRaised },
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <Plus size={14} color={T.textPrimary} />
+              </Pressable>
+            </View>
+
             <Pressable
-              onPress={() => setTaxPercentage((p) => Math.max(0, p - 1))}
+              onPress={() => setShowTaxModal(true)}
               style={({ pressed }) => [
-                styles.stepperBtn,
-                { borderColor: T.border },
-                pressed && { backgroundColor: T.bgCardRaised },
-              ]}
-            >
-              <Minus size={14} color={T.textPrimary} />
-            </Pressable>
-            <Text
-              style={[
-                theme.textStyles.subheadline,
                 {
-                  color: T.textPrimary,
-                  marginHorizontal: 8,
-                  fontWeight: "bold",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  backgroundColor: T.bgCardRaised,
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: T.border,
                 },
+                pressed && { backgroundColor: T.border },
               ]}
             >
-              {taxPercentage}%
-            </Text>
-            <Pressable
-              onPress={() => setTaxPercentage((p) => p + 1)}
-              style={({ pressed }) => [
-                styles.stepperBtn,
-                { borderColor: T.border },
-                pressed && { backgroundColor: T.bgCardRaised },
-              ]}
-            >
-              <Plus size={14} color={T.textPrimary} />
+              <Users size={14} color={T.primary} style={{ marginRight: 6 }} />
+              <Text
+                style={{
+                  color: T.textPrimary,
+                  fontSize: 12,
+                  fontWeight: "bold",
+                  marginRight: 4,
+                }}
+              >
+                {taxOptOutIds.length === 0
+                  ? t("balances.tax_everyone")
+                  : t("balances.tax_custom", { count: payingPeopleCount })}
+              </Text>
+              <ChevronRight size={14} color={T.textSecondary} />
             </Pressable>
           </View>
         )}
-
-        <View style={{ marginLeft: theme.spacing[3] }}>
-          <Switch
-            value={isTaxEnabled}
-            onValueChange={setIsTaxEnabled}
-            trackColor={{ false: T.border, true: T.primary }}
-            thumbColor={Platform.OS === "ios" ? "#FFF" : "#FFF"}
-          />
-        </View>
       </View>
 
       <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: T.textDisabled }]}>
-          PARTICIPANTES
-        </Text>
-        <Text style={[theme.textStyles.footnote, { color: T.textSecondary }]}>
-          {finalStats.length} pessoas
-        </Text>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text style={[styles.sectionTitle, { color: T.textDisabled }]}>
+            {t("balances.participants")}
+          </Text>
+          <Text
+            style={[
+              theme.textStyles.footnote,
+              { color: T.textSecondary, marginLeft: 8 },
+            ]}
+          >
+            {t("balances.people_count", { count: finalStats.length })}
+          </Text>
+        </View>
+
+        <Pressable
+          onPress={() => setShowAssumeModal(true)}
+          style={({ pressed }) => [
+            { flexDirection: "row", alignItems: "center", padding: 4 },
+            pressed && { opacity: 0.7 },
+          ]}
+        >
+          <HeartHandshake size={16} color={T.primary} />
+          <Text
+            style={{
+              color: T.primary,
+              fontSize: 12,
+              fontWeight: "bold",
+              marginLeft: 6,
+            }}
+          >
+            {t("balances.assume_account")}
+          </Text>
+        </Pressable>
       </View>
     </>
   );
@@ -321,7 +458,7 @@ export default function BalancesScreen() {
             { color: T.textPrimary, flex: 1, textAlign: "center" },
           ]}
         >
-          Painel de Saldos
+          {t("balances.title")}
         </Text>
       </View>
 
@@ -339,16 +476,16 @@ export default function BalancesScreen() {
 
           let statusColor: string = T.textSecondary;
           let statusBg: string = T.bgCardRaised;
-          let statusText: string = "QUITADO";
+          let statusText: string = t("balances.settled");
 
           if (isToReceive) {
             statusColor = T.primary;
             statusBg = "rgba(50, 205, 50, 0.1)";
-            statusText = "RECEBER";
+            statusText = t("balances.to_receive");
           } else if (isToPay) {
             statusColor = T.negative;
             statusBg = T.negativeBg;
-            statusText = "DEVE";
+            statusText = t("balances.to_pay");
           }
 
           return (
@@ -385,9 +522,18 @@ export default function BalancesScreen() {
                     { color: T.textSecondary, marginTop: 2 },
                   ]}
                 >
-                  {stat.paid > 0
-                    ? `Pagou ${formatMoney(stat.paid)}`
-                    : `Consumiu ${formatMoney(stat.consumed)}`}
+                  {stat.isAssumedBy
+                    ? t("balances.assumed_by", {
+                        name: finalStats.find((s) => s.id === stat.isAssumedBy)
+                          ?.name,
+                      })
+                    : stat.paid > 0
+                      ? t("balances.paid_amount", {
+                          amount: formatMoney(stat.paid),
+                        })
+                      : t("balances.consumed_amount", {
+                          amount: formatMoney(stat.consumed),
+                        })}
                 </Text>
               </View>
 
@@ -448,7 +594,13 @@ export default function BalancesScreen() {
         participant={selectedParticipant}
         allExpenses={allExpenses}
         currencySymbol={currencySymbol}
-        taxMultiplier={taxMultiplier}
+        taxMultiplier={effectiveTaxMultiplier}
+        taxPerPerson={taxPerPerson}
+        isPayingTax={
+          selectedParticipant
+            ? !taxOptOutIds.includes(selectedParticipant.id)
+            : false
+        }
         onClose={() => setSelectedParticipant(null)}
       />
 
@@ -459,7 +611,10 @@ export default function BalancesScreen() {
               pathname: "/detailed-summary",
               params: {
                 eventId: eventId,
-                taxMultiplier: taxMultiplier.toString(),
+                taxMultiplier: effectiveTaxMultiplier.toString(),
+                taxPerPerson: taxPerPerson.toString(),
+                taxOptOutIds: JSON.stringify(taxOptOutIds),
+                assumptions: JSON.stringify(assumptions),
               },
             });
           }}
@@ -475,10 +630,341 @@ export default function BalancesScreen() {
             style={{ marginRight: theme.spacing[2] }}
           />
           <Text style={[theme.textStyles.headline, { color: T.textOnLime }]}>
-            Finalizar Evento
+            {t("balances.finish_event")}
           </Text>
         </Pressable>
       </View>
+
+      <Modal
+        visible={showTaxModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowTaxModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[styles.modalContent, { backgroundColor: T.bgCardRaised }]}
+          >
+            <View style={[styles.modalHeader, { borderBottomColor: T.border }]}>
+              <Text style={[theme.textStyles.title3, { color: T.textPrimary }]}>
+                {t("balances.tax_modal_title")}
+              </Text>
+              <Pressable onPress={() => setShowTaxModal(false)}>
+                <X size={24} color={T.textSecondary} />
+              </Pressable>
+            </View>
+            <ScrollView
+              style={{ maxHeight: 650 }}
+              contentContainerStyle={{
+                padding: theme.spacing[6],
+                paddingBottom: theme.spacing[8],
+              }}
+              showsVerticalScrollIndicator={false}
+            >
+              {userStats.map((stat) => {
+                const isSelected = !taxOptOutIds.includes(stat.id);
+                return (
+                  <ParticipantCheckbox
+                    key={stat.id}
+                    name={stat.name}
+                    initials={stat.initials}
+                    isOwner={false}
+                    isSelected={isSelected}
+                    onToggle={() => {
+                      if (isSelected)
+                        setTaxOptOutIds((prev) => [...prev, stat.id]);
+                      else
+                        setTaxOptOutIds((prev) =>
+                          prev.filter((id) => id !== stat.id),
+                        );
+                    }}
+                  />
+                );
+              })}
+              {taxOptOutIds.length > 0 && (
+                <View
+                  style={{
+                    marginTop: 24,
+                    padding: 16,
+                    backgroundColor: T.bgCard,
+                    borderRadius: 12,
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: 8,
+                    }}
+                  >
+                    <Text
+                      style={[
+                        theme.textStyles.headline,
+                        { color: T.textPrimary, flex: 1, paddingRight: 8 },
+                      ]}
+                    >
+                      {t("balances.absorb_tax_title")}
+                    </Text>
+                    <Switch
+                      value={absorbTax}
+                      onValueChange={setAbsorbTax}
+                      trackColor={{ false: T.border, true: T.primary }}
+                    />
+                  </View>
+                  <Text
+                    style={[
+                      theme.textStyles.footnote,
+                      { color: T.textSecondary },
+                    ]}
+                  >
+                    {t("balances.absorb_tax_desc")}
+                  </Text>
+                </View>
+              )}
+            </ScrollView>
+            <View style={{ padding: theme.spacing[6], paddingTop: 0 }}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.mainButton,
+                  { backgroundColor: pressed ? T.primaryPress : T.primary },
+                  pressed && { transform: [{ scale: 0.98 }] },
+                ]}
+                onPress={() => setShowTaxModal(false)}
+              >
+                <Text
+                  style={{
+                    color: T.textOnLime,
+                    fontWeight: "bold",
+                    fontSize: 16,
+                  }}
+                >
+                  {t("balances.confirm_btn")}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showAssumeModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowAssumeModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[styles.modalContent, { backgroundColor: T.bgCardRaised }]}
+          >
+            <View style={[styles.modalHeader, { borderBottomColor: T.border }]}>
+              <Text style={[theme.textStyles.title3, { color: T.textPrimary }]}>
+                {t("balances.assume_account")}
+              </Text>
+              <Pressable onPress={() => setShowAssumeModal(false)}>
+                <X size={24} color={T.textSecondary} />
+              </Pressable>
+            </View>
+            <ScrollView style={{ maxHeight: 600 }}>
+              <View style={{ padding: theme.spacing[6] }}>
+                <Text
+                  style={[
+                    theme.textStyles.body,
+                    { color: T.textSecondary, marginBottom: 24 },
+                  ]}
+                >
+                  {t("balances.assume_account_desc")}
+                </Text>
+
+                <Text
+                  style={[
+                    theme.textStyles.headline,
+                    { color: T.textPrimary, marginBottom: 12 },
+                  ]}
+                >
+                  {t("balances.who_pays")}
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={{ marginBottom: 24 }}
+                >
+                  {userStats
+                    .filter((u) => !assumptions[u.id])
+                    .map((u) => (
+                      <Pressable
+                        key={u.id}
+                        onPress={() => setNewAssumerId(u.id)}
+                        style={[
+                          styles.avatarChip,
+                          { backgroundColor: T.bgCard, borderColor: T.border },
+                          newAssumerId === u.id && {
+                            borderColor: T.primary,
+                            backgroundColor: "rgba(190, 255, 108, 0.1)",
+                          },
+                        ]}
+                      >
+                        <View
+                          style={[
+                            styles.chipAvatar,
+                            { backgroundColor: T.bgCardRaised },
+                          ]}
+                        >
+                          <Text
+                            style={{
+                              fontSize: 10,
+                              fontWeight: "bold",
+                              color: T.textPrimary,
+                            }}
+                          >
+                            {u.initials}
+                          </Text>
+                        </View>
+                        <Text
+                          style={{
+                            color: T.textPrimary,
+                            fontWeight:
+                              newAssumerId === u.id ? "bold" : "normal",
+                          }}
+                        >
+                          {u.name}
+                        </Text>
+                      </Pressable>
+                    ))}
+                </ScrollView>
+
+                <Text
+                  style={[
+                    theme.textStyles.headline,
+                    { color: T.textPrimary, marginBottom: 12 },
+                  ]}
+                >
+                  {t("balances.whose_bill")}
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={{ marginBottom: 32 }}
+                >
+                  {userStats
+                    .filter(
+                      (u) =>
+                        u.id !== newAssumerId &&
+                        !Object.values(assumptions).includes(u.id) &&
+                        !assumptions[u.id],
+                    )
+                    .map((u) => (
+                      <Pressable
+                        key={u.id}
+                        onPress={() => setNewAssumeeId(u.id)}
+                        style={[
+                          styles.avatarChip,
+                          { backgroundColor: T.bgCard, borderColor: T.border },
+                          newAssumeeId === u.id && {
+                            borderColor: T.primary,
+                            backgroundColor: "rgba(190, 255, 108, 0.1)",
+                          },
+                        ]}
+                      >
+                        <View
+                          style={[
+                            styles.chipAvatar,
+                            { backgroundColor: T.bgCardRaised },
+                          ]}
+                        >
+                          <Text
+                            style={{
+                              fontSize: 10,
+                              fontWeight: "bold",
+                              color: T.textPrimary,
+                            }}
+                          >
+                            {u.initials}
+                          </Text>
+                        </View>
+                        <Text
+                          style={{
+                            color: T.textPrimary,
+                            fontWeight:
+                              newAssumeeId === u.id ? "bold" : "normal",
+                          }}
+                        >
+                          {u.name}
+                        </Text>
+                      </Pressable>
+                    ))}
+                </ScrollView>
+
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.mainButton,
+                    { backgroundColor: pressed ? T.primaryPress : T.primary },
+                    (!newAssumerId || !newAssumeeId) && { opacity: 0.5 },
+                  ]}
+                  disabled={!newAssumerId || !newAssumeeId}
+                  onPress={() => {
+                    if (newAssumerId && newAssumeeId) {
+                      setAssumptions((prev) => ({
+                        ...prev,
+                        [newAssumeeId]: newAssumerId,
+                      }));
+                      setNewAssumerId(null);
+                      setNewAssumeeId(null);
+                    }
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: T.textOnLime,
+                      fontWeight: "bold",
+                      fontSize: 16,
+                    }}
+                  >
+                    {t("common.confirm")}
+                  </Text>
+                </Pressable>
+
+                {Object.keys(assumptions).length > 0 && (
+                  <View style={{ marginTop: 40 }}>
+                    <Text
+                      style={[
+                        theme.textStyles.headline,
+                        { color: T.textPrimary, marginBottom: 12 },
+                      ]}
+                    >
+                      {t("balances.active_assumptions")}
+                    </Text>
+                    {Object.entries(assumptions).map(([eeId, erId]) => {
+                      const ee = userStats.find((u) => u.id === eeId);
+                      const er = userStats.find((u) => u.id === erId);
+                      return (
+                        <View key={eeId} style={styles.assumptionRow}>
+                          <Text style={{ color: T.textSecondary }}>
+                            {er?.name} assumiu {ee?.name}
+                          </Text>
+                          <Pressable
+                            onPress={() => {
+                              const newAssump = { ...assumptions };
+                              delete newAssump[eeId];
+                              setAssumptions(newAssump);
+                            }}
+                          >
+                            <Text
+                              style={{ color: T.negative, fontWeight: "bold" }}
+                            >
+                              {t("balances.undo")}
+                            </Text>
+                          </Pressable>
+                        </View>
+                      );
+                    })}
+                  </View>
+                )}
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -508,8 +994,6 @@ const styles = StyleSheet.create({
   },
   divider: { width: 1, height: 30 },
   taxToggleCard: {
-    flexDirection: "row",
-    alignItems: "center",
     padding: theme.spacing[4],
     borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
@@ -581,5 +1065,46 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.xl,
     justifyContent: "center",
     alignItems: "center",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.65)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    borderTopLeftRadius: theme.borderRadius.xl,
+    borderTopRightRadius: theme.borderRadius.xl,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: theme.spacing[6],
+    borderBottomWidth: 1,
+  },
+  avatarChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 6,
+    paddingRight: 16,
+    borderRadius: 24,
+    borderWidth: 1,
+    marginRight: 12,
+  },
+  chipAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8,
+  },
+  assumptionRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: T.border,
   },
 });

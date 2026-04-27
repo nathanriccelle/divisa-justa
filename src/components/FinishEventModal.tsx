@@ -1,5 +1,6 @@
 import { Calculator, X } from "lucide-react-native";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { theme } from "../theme";
 
@@ -16,6 +17,8 @@ export function FinishEventModal({
   onClose,
   onConfirm,
 }: FinishEventModalProps) {
+  const { t } = useTranslation();
+
   return (
     <Modal
       visible={visible}
@@ -48,7 +51,7 @@ export function FinishEventModal({
               { color: T.textPrimary, marginTop: theme.spacing[4] },
             ]}
           >
-            Encerrar Divisão?
+            {t("finish_event_modal.title")}
           </Text>
 
           <Text
@@ -61,8 +64,7 @@ export function FinishEventModal({
               },
             ]}
           >
-            Você está prestes a fechar esta conta. Iremos calcular exatamente
-            quem pagou o quê e quem deve para quem.
+            {t("finish_event_modal.description")}
           </Text>
 
           <View style={styles.buttonRow}>
@@ -77,7 +79,7 @@ export function FinishEventModal({
               <Text
                 style={[theme.textStyles.headline, { color: T.textSecondary }]}
               >
-                Voltar
+                {t("finish_event_modal.back_button")}
               </Text>
             </Pressable>
 
@@ -92,7 +94,7 @@ export function FinishEventModal({
               <Text
                 style={[theme.textStyles.headline, { color: T.textOnLime }]}
               >
-                Sim, calcular!
+                {t("finish_event_modal.confirm_button")}
               </Text>
             </Pressable>
           </View>

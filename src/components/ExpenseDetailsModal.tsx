@@ -1,6 +1,6 @@
-// Caminho: src/components/ExpenseDetailsModal.tsx
 import { ArrowRight, Trash2, X } from "lucide-react-native";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Alert, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { theme } from "../theme";
 
@@ -33,6 +33,8 @@ export function ExpenseDetailsModal({
   onClose,
   onDelete,
 }: ExpenseDetailsModalProps) {
+  const { t } = useTranslation();
+
   if (!expense) return null;
 
   const total = expense.amount * expense.quantity;
@@ -49,9 +51,10 @@ export function ExpenseDetailsModal({
 
   const payers = participants.filter((p) => payerIds.includes(p.id));
   const payerName =
-    payers.length > 0 ? payers.map((p) => p.name).join(", ") : "Desconhecido";
+    payers.length > 0
+      ? payers.map((p) => p.name).join(", ")
+      : t("expense_details_modal.unknown");
 
-  // Pega todo mundo que consumiu, mas tira o pagante (pois ele não deve para ele mesmo)
   const debtors = participants.filter(
     (p) => consumerIds.includes(p.id) && !payerIds.includes(p.id),
   );
@@ -62,12 +65,12 @@ export function ExpenseDetailsModal({
 
   const handleDeleteConfirm = () => {
     Alert.alert(
-      "Excluir Despesa",
-      `Tem certeza que deseja excluir "${expense.title}"? Essa ação não pode ser desfeita.`,
+      t("expense_details_modal.delete_expense_title"),
+      t("expense_details_modal.delete_expense_desc", { title: expense.title }),
       [
-        { text: "Cancelar", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Excluir",
+          text: t("expense_details_modal.delete"),
           style: "destructive",
           onPress: () => {
             if (onDelete) onDelete(expense.id);
@@ -89,7 +92,7 @@ export function ExpenseDetailsModal({
         <View style={[styles.content, { backgroundColor: T.bgScreen }]}>
           <View style={[styles.header, { borderBottomColor: T.border }]}>
             <Text style={[theme.textStyles.title3, { color: T.textPrimary }]}>
-              Detalhes do Item
+              {t("expense_details_modal.title")}
             </Text>
             <Pressable onPress={onClose}>
               <X size={24} color={T.textSecondary} />
@@ -118,7 +121,7 @@ export function ExpenseDetailsModal({
                   { color: T.textSecondary, marginBottom: 4 },
                 ]}
               >
-                Valor Total:{" "}
+                {t("expense_details_modal.total_value")}{" "}
                 <Text style={{ color: T.textPrimary, fontWeight: "bold" }}>
                   {currencySymbol} {total.toFixed(2).replace(".", ",")}
                 </Text>
@@ -129,20 +132,20 @@ export function ExpenseDetailsModal({
                   { color: T.textSecondary, marginBottom: 4 },
                 ]}
               >
-                Pago por:{" "}
+                {t("expense_details_modal.paid_by")}{" "}
                 <Text style={{ color: T.primary, fontWeight: "bold" }}>
                   {payerName}
                 </Text>
               </Text>
               <Text style={[theme.textStyles.body, { color: T.textSecondary }]}>
-                Consumido por:{" "}
+                {t("expense_details_modal.consumed_by")}{" "}
                 <Text style={{ color: T.textPrimary }}>{consumersNames}</Text>
               </Text>
             </View>
 
             {/* MATEMÁTICA / QUEM DEVE QUEM */}
             <Text style={[styles.sectionTitle, { color: T.textDisabled }]}>
-              COMO FICA A DIVISÃO
+              {t("expense_details_modal.division_summary")}
             </Text>
 
             {debtors.length > 0 ? (
@@ -150,7 +153,12 @@ export function ExpenseDetailsModal({
                 const payerList =
                   payers.length > 0
                     ? payers
-                    : [{ id: "unknown", name: "Desconhecido" }];
+                    : [
+                        {
+                          id: "unknown",
+                          name: t("expense_details_modal.unknown"),
+                        },
+                      ];
                 const splitAmount = costPerPerson / payerList.length;
 
                 return payerList.map((payer) => (
@@ -202,9 +210,8 @@ export function ExpenseDetailsModal({
               >
                 {payerName}{" "}
                 {payers.length > 1
-                  ? "pagaram juntos e não geraram dívidas aqui"
-                  : "pagou e consumiu sozinho"}
-                . Ninguém deve nada!
+                  ? t("expense_details_modal.no_debt_multiple")
+                  : t("expense_details_modal.no_debt_single")}
               </Text>
             )}
             {onDelete && (
@@ -226,7 +233,7 @@ export function ExpenseDetailsModal({
                     { color: T.bg, marginLeft: theme.spacing[4] },
                   ]}
                 >
-                  Excluir Item
+                  {t("expense_details_modal.delete_item")}
                 </Text>
               </Pressable>
             )}
