@@ -29,12 +29,7 @@ export function EventSummaryCard({
 
   return (
     <>
-      <View
-        style={[
-          styles.summaryCard,
-          { backgroundColor: T.bgCardRaised, borderColor: T.border },
-        ]}
-      >
+      <View style={[styles.summaryCard, { backgroundColor: T.bgScreen }]}>
         <View style={styles.summaryTopRow}>
           <Text
             style={[theme.textStyles.subheadline, { color: T.textSecondary }]}
@@ -127,7 +122,7 @@ export function EventSummaryCard({
         </Pressable>
       </View>
 
-      {/* 👇 2. NOSSO COMPONENTE NOVO (Limpo e elegante!) */}
+      {/* NOSSO COMPONENTE NOVO */}
       <ParticipantsModal
         visible={showParticipantsModal}
         participants={participants}

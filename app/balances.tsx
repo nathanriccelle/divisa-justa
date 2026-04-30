@@ -419,14 +419,23 @@ export default function BalancesScreen() {
         <Pressable
           onPress={() => setShowAssumeModal(true)}
           style={({ pressed }) => [
-            { flexDirection: "row", alignItems: "center", padding: 4 },
-            pressed && { opacity: 0.7 },
+            {
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: T.bgCardRaised,
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              borderRadius: 8,
+              borderWidth: 1,
+              borderColor: T.border,
+            },
+            pressed && { backgroundColor: T.border },
           ]}
         >
-          <HeartHandshake size={16} color={T.primary} />
+          <HeartHandshake size={14} color={T.primary} />
           <Text
             style={{
-              color: T.primary,
+              color: T.textPrimary,
               fontSize: 12,
               fontWeight: "bold",
               marginLeft: 6,
@@ -601,6 +610,9 @@ export default function BalancesScreen() {
             ? !taxOptOutIds.includes(selectedParticipant.id)
             : false
         }
+        assumptions={assumptions}
+        participantsList={userStats}
+        taxOptOutIds={taxOptOutIds}
         onClose={() => setSelectedParticipant(null)}
       />
 
@@ -940,7 +952,7 @@ export default function BalancesScreen() {
                       return (
                         <View key={eeId} style={styles.assumptionRow}>
                           <Text style={{ color: T.textSecondary }}>
-                            {er?.name} assumiu {ee?.name}
+                            {er?.name} cobriu a parte de {ee?.name}
                           </Text>
                           <Pressable
                             onPress={() => {

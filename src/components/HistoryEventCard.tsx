@@ -29,12 +29,12 @@ export function HistoryEventCard({
       onPress={onPress}
       style={({ pressed }) => [
         styles.container,
-        { backgroundColor: T.bgCard, borderColor: T.border },
+        { backgroundColor: T.bg, borderWidth: 2, borderColor: T.border },
         pressed && { backgroundColor: T.bgCardRaised },
       ]}
     >
       <View style={[styles.iconBox, { backgroundColor: T.bgCardRaised }]}>
-        <Users size={20} color={T.primary} />
+        <Users size={20} color={T.textPrimary} />
       </View>
 
       <View style={styles.infoBox}>

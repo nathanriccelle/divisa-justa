@@ -42,7 +42,7 @@ export function ParticipantsModal({
     >
       <Pressable style={styles.modalOverlay} onPress={onClose}>
         <Pressable
-          style={[styles.content, { backgroundColor: T.bgCardRaised }]}
+          style={[styles.content, { backgroundColor: T.bgScreen }]}
           onPress={() => {}}
         >
           {/* CABEÇALHO */}

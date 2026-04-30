@@ -14,6 +14,22 @@
     "empty_state_title": "No events yet",
     "empty_state_desc": "Your history is clean. How about organizing that barbecue or trip with friends? Tap the \"+\" button above to get started."
   },
+  "create_event": {
+    "title": "Setup Event",
+    "you": "You",
+    "organizer": "Organizer",
+    "me_initials": "ME",
+    "error_title": "Missing Name!",
+    "error_desc": "Even a \"Nameless Barbecue\" needs a name. Type something so we can continue!",
+    "event_name_label": "EVENT NAME",
+    "event_name_placeholder": "E.g.: Team Barbecue",
+    "currency_label": "CURRENCY",
+    "participants": "Participants",
+    "people_count_one": "{{count}} person",
+    "people_count_other": "{{count}} people",
+    "participant_name_placeholder": "Person's name",
+    "next_btn": "Next"
+  },
   "event": {
     "item_count_one": "{{count}} item",
     "item_count_other": "{{count}} items"
@@ -171,7 +187,21 @@
     "paid_bills": "PAID BILLS",
     "no_paid": "Paid no bills.",
     "divided_with_one": "Divided with {{count}} person",
-    "divided_with_other": "Divided with {{count}} people"
+    "divided_with_other": "Divided with {{count}} people",
+    "divided_by_your_part": "Divided by {{count}} - your part:",
+    "paid_your_part": "Paid {{paid}} - your part is {{consumed}}",
+    "paid_no_consumption": "Paid {{paid}} but consumed nothing",
+    "to_pay_item": "To pay",
+    "credit_item": "Credit",
+    "paid_item": "Paid",
+    "tax_fee_desc": "Event service fee",
+    "total_consumed": "Total Consumed",
+    "left_to_pay": "Left to Pay",
+    "paid_progress": "Paid: {{amount}}",
+    "left_progress": "Left: {{amount}}",
+    "credit_card_title": "Total Credit",
+    "paid_more_than_part": "{{name}} paid more than their part",
+    "detailing": "Detailing"
   },
   "participant_summary_card": {
     "consumption_summary": "Consumption summary",

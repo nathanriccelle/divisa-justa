@@ -31,13 +31,13 @@ export function ExpenseItem({
       onPress={onPress}
       style={({ pressed }) => [
         styles.container,
-        { backgroundColor: T.bgCard, borderColor: T.border },
+        { backgroundColor: T.bg, borderColor: T.border, borderWidth: 2 },
         pressed && { backgroundColor: T.bgCardRaised },
       ]}
     >
       {/* Ícone */}
       <View style={[styles.iconBox, { backgroundColor: T.bgCardRaised }]}>
-        <Receipt size={24} color={T.primary} />
+        <Receipt size={24} color={T.textPrimary} />
       </View>
 
       {/* Título e Quantidade */}

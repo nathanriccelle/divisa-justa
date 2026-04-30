@@ -98,12 +98,7 @@ export default function HomeScreen() {
       </View>
 
       {/* CARTÃO PRINCIPAL */}
-      <View
-        style={[
-          styles.mainCard,
-          { backgroundColor: T.bgCard, borderColor: T.border, borderWidth: 1 },
-        ]}
-      >
+      <View style={[styles.mainCard, { backgroundColor: T.bgScreen }]}>
         <Pressable
           style={({ pressed }) => [
             styles.addButton,
@@ -179,7 +174,7 @@ export default function HomeScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: T.bgScreen }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: T.bg }]}>
       <StatusBar barStyle="light-content" backgroundColor={T.bgScreen} />
 
       {/* FLATLIST */}

@@ -32,6 +32,7 @@ import {
 } from "../src/components/CurrencySelector";
 
 import { useUser } from "@/src/contexts/UserContext";
+import { useTranslation } from "react-i18next";
 import { db } from "../src/db";
 import { events, participants as participantsTable } from "../src/db/schema";
 
@@ -44,6 +45,7 @@ type Participant = {
 };
 
 export default function CreateEventScreen() {
+  const { t } = useTranslation();
   const { userName, userCurrency } = useUser();
   const defaultCurrency =
     CURRENCY_LIST.find((c) => c.code === userCurrency) ?? CURRENCY_LIST[0];
@@ -51,9 +53,11 @@ export default function CreateEventScreen() {
   const [participants, setParticipants] = useState<Participant[]>([
     {
       id: "owner-1",
-      name: userName || "Você",
-      role: "Organizador",
-      initials: userName ? userName.substring(0, 2).toUpperCase() : "EU",
+      name: userName || t("create_event.you"),
+      role: t("create_event.organizer"),
+      initials: userName
+        ? userName.substring(0, 2).toUpperCase()
+        : t("create_event.me_initials"),
       isOwner: true,
     },
   ]);
@@ -152,7 +156,7 @@ export default function CreateEventScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: T.bgScreen }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: T.bg }]}>
       {/* COMPONENTE DE AVISO (FLUTUANTE) */}
       {showError && (
         <Animated.View
@@ -175,13 +179,12 @@ export default function CreateEventScreen() {
                   { color: T.negative, fontWeight: "bold" },
                 ]}
               >
-                Faltou o Nome!
+                {t("create_event.error_title")}
               </Text>
               <Text
                 style={[theme.textStyles.footnote, { color: T.textPrimary }]}
               >
-                Até um "Churrasco sem nome" precisa de nome. Digita algo para
-                prosseguirmos!
+                {t("create_event.error_desc")}
               </Text>
             </View>
           </View>
@@ -200,7 +203,7 @@ export default function CreateEventScreen() {
           <ChevronLeft size={28} color={T.primary} />
         </Pressable>
         <Text style={[theme.textStyles.title3, { color: T.textPrimary }]}>
-          Configurar Evento
+          {t("create_event.title")}
         </Text>
         <View style={styles.backButton} />
       </View>
@@ -217,7 +220,7 @@ export default function CreateEventScreen() {
           {/* NOME DO EVENTO */}
           <View style={styles.inputGroup}>
             <Text style={[styles.label, { color: T.textSecondary }]}>
-              NOME DO EVENTO
+              {t("create_event.event_name_label")}
             </Text>
             <View
               style={[
@@ -235,7 +238,7 @@ export default function CreateEventScreen() {
               />
               <TextInput
                 style={[styles.textInput, { color: T.textPrimary }]}
-                placeholder="Ex: Churrasco da Turma"
+                placeholder={t("create_event.event_name_placeholder")}
                 placeholderTextColor={T.textDisabled}
                 value={eventName}
                 onChangeText={(text) => {
@@ -249,7 +252,7 @@ export default function CreateEventScreen() {
           {/* MOEDA */}
           <View style={styles.inputGroup}>
             <Text style={[styles.label, { color: T.textSecondary }]}>
-              MOEDA
+              {t("create_event.currency_label")}
             </Text>
             <CurrencySelector
               selectedCurrency={selectedCurrency}
@@ -261,12 +264,13 @@ export default function CreateEventScreen() {
           <View style={styles.participantsSection}>
             <View style={styles.participantsHeader}>
               <Text style={[theme.textStyles.title3, { color: T.textPrimary }]}>
-                Participantes
+                {t("create_event.participants")}
               </Text>
               <View style={[styles.badge, { backgroundColor: T.bgCard }]}>
                 <Text style={[theme.textStyles.footnote, { color: T.primary }]}>
-                  {participants.length}{" "}
-                  {participants.length === 1 ? "pessoa" : "pessoas"}
+                  {t("create_event.people_count", {
+                    count: participants.length,
+                  })}
                 </Text>
               </View>
             </View>
@@ -286,7 +290,7 @@ export default function CreateEventScreen() {
                 />
                 <TextInput
                   style={[styles.textInput, { color: T.textPrimary }]}
-                  placeholder="Nome da pessoa"
+                  placeholder={t("create_event.participant_name_placeholder")}
                   placeholderTextColor={T.textDisabled}
                   value={newParticipantName}
                   onChangeText={setNewParticipantName}
@@ -385,7 +389,7 @@ export default function CreateEventScreen() {
               { color: T.textOnLime, marginRight: theme.spacing[2] },
             ]}
           >
-            Próximo
+            {t("create_event.next_btn")}
           </Text>
           <ArrowRight size={20} color={T.textOnLime} />
         </Pressable>

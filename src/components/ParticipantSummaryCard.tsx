@@ -173,32 +173,36 @@ export function ParticipantSummaryCard({
                       </Text>
                     </View>
 
-                    <View
-                      style={[
-                        styles.badge,
-                        {
-                          backgroundColor: item.isPayer
-                            ? "rgba(190, 255, 108, 0.15)"
-                            : T.bgCardRaised,
-                        },
-                      ]}
-                    >
-                      {item.isPayer ? (
-                        <CheckCircle2 size={12} color={T.primary} />
-                      ) : (
-                        <CreditCard size={12} color={T.textSecondary} />
-                      )}
-                      <Text
+                    {item.payerName && (
+                      <View
                         style={[
-                          styles.badgeText,
-                          { color: item.isPayer ? T.primary : T.textSecondary },
+                          styles.badge,
+                          {
+                            backgroundColor: item.isPayer
+                              ? "rgba(190, 255, 108, 0.15)"
+                              : T.bgCardRaised,
+                          },
                         ]}
                       >
-                        {t("participant_summary_card.paid_by", {
-                          name: item.payerName,
-                        })}
-                      </Text>
-                    </View>
+                        {item.isPayer ? (
+                          <CheckCircle2 size={12} color={T.primary} />
+                        ) : (
+                          <CreditCard size={12} color={T.textSecondary} />
+                        )}
+                        <Text
+                          style={[
+                            styles.badgeText,
+                            {
+                              color: item.isPayer ? T.primary : T.textSecondary,
+                            },
+                          ]}
+                        >
+                          {t("participant_summary_card.paid_by", {
+                            name: item.payerName,
+                          })}
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 </View>
               </View>

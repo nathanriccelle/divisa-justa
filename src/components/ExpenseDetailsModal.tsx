@@ -89,7 +89,7 @@ export function ExpenseDetailsModal({
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={[styles.content, { backgroundColor: T.bgScreen }]}>
+        <View style={[styles.content, { backgroundColor: T.bg }]}>
           <View style={[styles.header, { borderBottomColor: T.border }]}>
             <Text style={[theme.textStyles.title3, { color: T.textPrimary }]}>
               {t("expense_details_modal.title")}
@@ -114,7 +114,16 @@ export function ExpenseDetailsModal({
             </Text>
 
             {/* RESUMO RÁPIDO */}
-            <View style={[styles.infoCard, { backgroundColor: T.bg }]}>
+            <View
+              style={[
+                styles.infoCard,
+                {
+                  backgroundColor: T.bg,
+                  borderWidth: 2,
+                  borderColor: T.border,
+                },
+              ]}
+            >
               <Text
                 style={[
                   theme.textStyles.body,
@@ -272,7 +281,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing[6],
   },
   sectionTitle: {
-    fontSize: theme.fontSize.xs,
+    fontSize: theme.fontSize.md,
     fontWeight: "bold",
     fontFamily: "Inter_700Bold",
     letterSpacing: 1,

@@ -140,7 +140,7 @@ export default function EventDetailsScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: T.bgScreen }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: T.bg }]}>
       <View style={styles.header}>
         <Pressable
           onPress={() => router.push("/")}

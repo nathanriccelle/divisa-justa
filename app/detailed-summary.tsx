@@ -17,6 +17,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { eq } from "drizzle-orm";
+import * as FileSystem from "expo-file-system/legacy";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import { db } from "../src/db";
@@ -181,7 +182,7 @@ export default function DetailedSummaryScreen() {
               portionAmount: parsedTaxPerPerson,
               totalItemAmount: totalTaxAmount,
               splitCount: taxSplitCount,
-              payerName: "-",
+              payerName: "",
               isPayer: false,
               date: "-",
             });
@@ -339,7 +340,7 @@ export default function DetailedSummaryScreen() {
                     ? p.consumedItems
                         .map((item) => {
                           const assumedHtml = item.assumedFromName
-                            ? `<span class="item-split" style="color: #8b5cf6; font-weight: 600; margin-top: 4px;">Assumido de ${item.assumedFromName}</span>`
+                            ? `<span class="item-split" style="color: #8b5cf6; font-weight: 600; margin-top: 4px;">Ajuda de ${item.assumedFromName}</span>`
                             : "";
                           return `
                     <div class="item">
@@ -373,10 +374,24 @@ export default function DetailedSummaryScreen() {
       `;
 
       const { uri } = await Print.printToFileAsync({ html: htmlContent });
+
+      // Pega o diretório atual do arquivo gerado e apenas troca o nome final
+      const uriParts = uri.split("/");
+      uriParts.pop(); // Remove o nome do arquivo temporário (ex: UUID.pdf)
+      const directoryUri = uriParts.join("/") + "/";
+
+      const safeEventName = eventName.replace(/[^a-zA-Z0-9]/g, "");
+      const newUri = `${directoryUri}Resumo_${safeEventName || "DivisaJusta"}.pdf`;
+
+      await FileSystem.moveAsync({
+        from: uri,
+        to: newUri,
+      });
+
       const isAvailable = await Sharing.isAvailableAsync();
 
       if (isAvailable) {
-        await Sharing.shareAsync(uri, {
+        await Sharing.shareAsync(newUri, {
           mimeType: "application/pdf",
           dialogTitle: t("detailed_summary.pdf_share_title", { eventName }),
           UTI: "com.adobe.pdf", // Identificador de tipo de arquivo no iOS
