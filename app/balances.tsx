@@ -30,7 +30,6 @@ import { db } from "../src/db";
 import { events, expenses, participants } from "../src/db/schema";
 import { theme } from "../src/theme";
 
-import { ParticipantStatementModal } from "@/src/components/ParticipantStatementModal";
 import { useTranslation } from "react-i18next";
 import { ParticipantCheckbox } from "../src/components/ParticipantCheckbox";
 
@@ -66,8 +65,6 @@ export default function BalancesScreen() {
   const [userStats, setUserStats] = useState<ParticipantStats[]>([]);
 
   const [allExpenses, setAllExpenses] = useState<ExpenseType[]>([]);
-  const [selectedParticipant, setSelectedParticipant] =
-    useState<ParticipantStats | null>(null);
 
   const [showTaxModal, setShowTaxModal] = useState(false);
   const [taxOptOutIds, setTaxOptOutIds] = useState<string[]>([]);
@@ -167,6 +164,7 @@ export default function BalancesScreen() {
   if (isTaxEnabled && payingPeopleCount > 0) {
     if (absorbTax) finalTaxAmount = originalTaxAmount;
     else finalTaxAmount = originalTaxAmount * (payingPeopleCount / totalPeople);
+
     taxPerPerson = finalTaxAmount / payingPeopleCount;
   }
 
@@ -177,7 +175,10 @@ export default function BalancesScreen() {
   const processedStats = userStats.map((stat) => {
     const finalPaid = stat.paid * effectiveTaxMultiplier;
     const isPayingTax = isTaxEnabled && !taxOptOutIds.includes(stat.id);
-    const finalConsumed = stat.consumed + (isPayingTax ? taxPerPerson : 0);
+
+    const myTax = isPayingTax ? taxPerPerson : 0;
+
+    const finalConsumed = stat.consumed + myTax;
     const balance = finalPaid - finalConsumed;
     return {
       ...stat,
@@ -498,13 +499,8 @@ export default function BalancesScreen() {
           }
 
           return (
-            <Pressable
-              onPress={() => setSelectedParticipant(stat)}
-              style={({ pressed }) => [
-                styles.participantRow,
-                { borderBottomColor: T.border },
-                pressed && { backgroundColor: T.bgCardRaised },
-              ]}
+            <View
+              style={[styles.participantRow, { borderBottomColor: T.border }]}
             >
               <View
                 style={[styles.avatar, { backgroundColor: T.bgCardRaised }]}
@@ -591,29 +587,9 @@ export default function BalancesScreen() {
                   </Text>
                 </View>
               </View>
-
-              <ChevronRight size={20} color={T.textDisabled} />
-            </Pressable>
+            </View>
           );
         }}
-      />
-
-      <ParticipantStatementModal
-        visible={selectedParticipant !== null}
-        participant={selectedParticipant}
-        allExpenses={allExpenses}
-        currencySymbol={currencySymbol}
-        taxMultiplier={effectiveTaxMultiplier}
-        taxPerPerson={taxPerPerson}
-        isPayingTax={
-          selectedParticipant
-            ? !taxOptOutIds.includes(selectedParticipant.id)
-            : false
-        }
-        assumptions={assumptions}
-        participantsList={userStats}
-        taxOptOutIds={taxOptOutIds}
-        onClose={() => setSelectedParticipant(null)}
       />
 
       <View style={[styles.footer, { backgroundColor: T.bgScreen }]}>

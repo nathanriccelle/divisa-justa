@@ -91,28 +91,15 @@ export function ExpenseDetailsModal({
       <View style={styles.overlay}>
         <View style={[styles.content, { backgroundColor: T.bg }]}>
           <View style={[styles.header, { borderBottomColor: T.border }]}>
-            <Text style={[theme.textStyles.title3, { color: T.textPrimary }]}>
-              {t("expense_details_modal.title")}
+            <Text style={[theme.textStyles.title2, { color: T.textPrimary }]}>
+              {expense.title}
             </Text>
             <Pressable onPress={onClose}>
-              <X size={24} color={T.textSecondary} />
+              <X size={28} color={T.textSecondary} />
             </Pressable>
           </View>
 
           <View style={styles.body}>
-            <Text
-              style={[
-                theme.textStyles.largeTitle,
-                {
-                  color: T.textPrimary,
-                  textAlign: "center",
-                  marginBottom: theme.spacing[4],
-                },
-              ]}
-            >
-              {expense.title}
-            </Text>
-
             {/* RESUMO RÁPIDO */}
             <View
               style={[

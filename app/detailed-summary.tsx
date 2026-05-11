@@ -170,7 +170,7 @@ export default function DetailedSummaryScreen() {
         });
       });
 
-      // Injona a fatia igualitária da Taxa de Serviço na lista individual
+      // Aplica a Taxa de Serviço DIVIDIDA IGUALMENTE
       if (parsedTaxPerPerson > 0) {
         const taxSplitCount = participantsData.length - parsedOptOutIds.length;
         const totalTaxAmount = parsedTaxPerPerson * taxSplitCount;
