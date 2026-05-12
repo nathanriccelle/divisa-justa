@@ -189,7 +189,7 @@ export default function AddExpenseScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: T.bgScreen }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: T.bg }]}>
       <View style={styles.header}>
         <Pressable
           onPress={() => router.back()}
@@ -229,7 +229,7 @@ export default function AddExpenseScreen() {
             <View
               style={[
                 styles.inputContainer,
-                { backgroundColor: T.bgCardRaised, borderColor: T.border },
+                { backgroundColor: T.bgCard, borderColor: T.border },
               ]}
             >
               <Receipt
@@ -254,7 +254,7 @@ export default function AddExpenseScreen() {
             <View
               style={[
                 styles.amountContainer,
-                { backgroundColor: T.bgCardRaised, borderColor: T.border },
+                { backgroundColor: T.bgCard, borderColor: T.border },
               ]}
             >
               <Text style={[styles.amountSymbol, { color: T.textPrimary }]}>
@@ -545,7 +545,7 @@ export default function AddExpenseScreen() {
             onPress={() => setShowPayerModal(false)}
           >
             <Pressable
-              style={[styles.modalContent, { backgroundColor: T.bgCardRaised }]}
+              style={[styles.modalContent, { backgroundColor: T.bgScreen }]}
               onPress={() => {}}
             >
               <View
@@ -612,7 +612,7 @@ export default function AddExpenseScreen() {
                         <Text
                           style={[
                             theme.textStyles.subheadline,
-                            { fontWeight: "bold", color: T.textPrimary },
+                            { fontWeight: "bold", color: T.textSecondary },
                           ]}
                         >
                           {person.initials}
@@ -652,7 +652,7 @@ export default function AddExpenseScreen() {
                   ]}
                 >
                   <Text
-                    style={[theme.textStyles.headline, { color: T.textOnLime }]}
+                    style={[theme.textStyles.title2, { color: T.textOnLime }]}
                   >
                     {t("add_expense.confirm_payers_btn")}
                   </Text>
@@ -672,11 +672,13 @@ export default function AddExpenseScreen() {
         <View style={styles.modalOverlay}>
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : undefined}
-            style={[styles.modalContent, { backgroundColor: T.bgCardRaised }]}
+            style={[styles.modalContent, { backgroundColor: T.bgScreen }]}
           >
-            <View style={[styles.modalHeader, { borderBottomColor: T.border }]}>
+            <View
+              style={[styles.modalHeader, { borderBottomColor: T.bgScreen }]}
+            >
               <Text style={[theme.textStyles.title3, { color: T.textPrimary }]}>
-                Adicionar Pessoa
+                {t("add_expense.add_person_modal_title")}
               </Text>
               <Pressable
                 onPress={() => setShowAddPersonModal(false)}

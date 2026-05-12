@@ -63,26 +63,26 @@ export function ParticipantSummaryCard({
   }
 
   return (
-    <View
-      style={[
-        styles.card,
-        { backgroundColor: T.bgCard, borderColor: T.border },
-      ]}
-    >
+    <View style={[styles.card, { backgroundColor: T.bgCard }]}>
       {/* CABEÇALHO DO CARTÃO */}
       <View style={[styles.header, { borderBottomColor: T.border }]}>
         <View style={[styles.avatar, { backgroundColor: T.bgCardRaised }]}>
           <Text
             style={[
               theme.textStyles.subheadline,
-              { fontWeight: "bold", color: T.textPrimary },
+              { fontWeight: "bold", color: T.textSecondary },
             ]}
           >
             {initials}
           </Text>
         </View>
         <View style={{ flex: 1, marginLeft: theme.spacing[3] }}>
-          <Text style={[theme.textStyles.title3, { color: T.textPrimary }]}>
+          <Text
+            style={[
+              theme.textStyles.title2,
+              { color: T.textPrimary, letterSpacing: 2 },
+            ]}
+          >
             {name}
           </Text>
           <Text style={[theme.textStyles.footnote, { color: T.textSecondary }]}>

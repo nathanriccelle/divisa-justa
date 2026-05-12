@@ -27,12 +27,7 @@ export function FinishEventModal({
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View
-          style={[
-            styles.content,
-            { backgroundColor: T.bgCardRaised, borderColor: T.border },
-          ]}
-        >
+        <View style={[styles.content, { backgroundColor: T.bgScreen }]}>
           <View style={styles.header}>
             <View style={[styles.iconWrapper, { backgroundColor: T.bgCard }]}>
               <Calculator size={28} color={T.primary} />

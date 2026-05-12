@@ -212,12 +212,7 @@ export default function BalancesScreen() {
   // 👇 CABEÇALHO DA LISTA
   const renderHeader = () => (
     <>
-      <View
-        style={[
-          styles.totalCard,
-          { backgroundColor: T.bgCardRaised, borderColor: T.border },
-        ]}
-      >
+      <View style={[styles.totalCard, { backgroundColor: T.bgCard }]}>
         <Text
           style={[
             theme.textStyles.subheadline,
@@ -423,12 +418,10 @@ export default function BalancesScreen() {
             {
               flexDirection: "row",
               alignItems: "center",
-              backgroundColor: T.bgCardRaised,
+              backgroundColor: T.bgCard,
               paddingHorizontal: 12,
               paddingVertical: 8,
               borderRadius: 8,
-              borderWidth: 1,
-              borderColor: T.border,
             },
             pressed && { backgroundColor: T.border },
           ]}
@@ -450,7 +443,7 @@ export default function BalancesScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: T.bgScreen }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: T.bg }]}>
       <View style={styles.header}>
         <Pressable
           onPress={() => router.back()}
@@ -742,9 +735,7 @@ export default function BalancesScreen() {
         onRequestClose={() => setShowAssumeModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View
-            style={[styles.modalContent, { backgroundColor: T.bgCardRaised }]}
-          >
+          <View style={[styles.modalContent, { backgroundColor: T.bgCard }]}>
             <View style={[styles.modalHeader, { borderBottomColor: T.border }]}>
               <Text style={[theme.textStyles.title3, { color: T.textPrimary }]}>
                 {t("balances.assume_account")}

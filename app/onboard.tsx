@@ -85,14 +85,15 @@ export default function OnboardScreen() {
 
       <View style={styles.imageContainer}>
         <Image
-          source={{
-            uri:
-              step === 1
-                ? "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=1000&auto=format&fit=crop"
-                : "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=1000&auto=format&fit=crop",
-          }}
+          source={
+            step === 1
+              ? require("../assets/images/amigos.png")
+              : step === 2
+                ? require("../assets/images/money.png")
+                : require("../assets/images/hand.png")
+          }
           style={styles.image}
-          resizeMode="cover"
+          resizeMode="contain"
         />
         <View style={styles.imageOverlay} />
       </View>
@@ -144,6 +145,42 @@ export default function OnboardScreen() {
           )}
 
           {step === 2 && (
+            <View style={styles.stepContainer}>
+              <Text style={[styles.title, { color: T.textPrimary }]}>
+                {t("onboard.title_part3")}
+              </Text>
+
+              <Text style={[styles.subtitle, { color: T.textSecondary }]}>
+                {t("onboard.subtitle_part3")}
+              </Text>
+
+              <View style={{ flex: 1 }} />
+
+              <Pressable
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setStep(3);
+                }}
+                style={({ pressed }) => [
+                  styles.mainButton,
+                  { backgroundColor: pressed ? T.primaryPress : T.primary },
+                  pressed && { transform: [{ scale: 0.98 }] },
+                ]}
+              >
+                <Text
+                  style={[
+                    theme.textStyles.title2,
+                    { color: T.textOnLime, marginRight: theme.spacing[4] },
+                  ]}
+                >
+                  Próximo
+                </Text>
+                <ArrowRight size={20} color={T.textOnLime} />
+              </Pressable>
+            </View>
+          )}
+
+          {step === 3 && (
             <View style={styles.stepContainer}>
               <Text style={[styles.title, { color: T.textPrimary }]}>
                 Como podemos te chamar?
@@ -261,6 +298,12 @@ const styles = StyleSheet.create({
     flex: 1.2,
     width: "100%",
     position: "relative",
+    backgroundColor: "#D5E7B5",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingTop: 40,
+    paddingBottom: 70,
   },
   image: {
     width: "100%",
@@ -271,7 +314,7 @@ const styles = StyleSheet.create({
   },
   bottomSheet: {
     flex: 1,
-    marginTop: -40,
+    marginTop: -90,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     overflow: "hidden",

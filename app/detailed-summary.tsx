@@ -267,57 +267,63 @@ export default function DetailedSummaryScreen() {
           <head>
             <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
             <style>
-              body { font-family: system-ui, -apple-system, sans-serif; color: #333; padding: 20px; background-color: #f4f4f5; margin: 0; }
-              .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-              h1 { text-align: center; font-size: 26px; color: #111; margin-top: 0; margin-bottom: 8px; }
-              .subtitle { text-align: center; color: #666; font-size: 14px; margin-bottom: 30px; }
+              @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+              body { font-family: 'Inter', -apple-system, sans-serif; color: #1e293b; padding: 24px; background-color: #ffffff; margin: 0; line-height: 1.5; font-size: 18px; }
+              .header-title { text-align: center; font-size: 32px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; }
+              .header-subtitle { text-align: center; color: #64748b; font-size: 18px; margin-bottom: 32px; font-weight: 500; }
               
-              .settlements-card { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 30px; }
-              .settlements-card h2 { margin-top: 0; font-size: 18px; color: #0f172a; display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
-              .settlement-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e2e8f0; }
+              .settlements-card { background-color: #f8fafc; border-radius: 16px; padding: 24px; margin-bottom: 32px; border: 1px solid #e2e8f0; }
+              .section-title { font-size: 24px; font-weight: 800; color: #0f172a; margin: 0 0 20px 0; display: flex; align-items: center; gap: 8px; }
+              
+              .settlement-row { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid #cbd5e1; }
               .settlement-row:last-child { border-bottom: none; padding-bottom: 0; }
-              .person { font-weight: 600; color: #334155; font-size: 15px; }
-              .arrow { color: #94a3b8; font-weight: bold; margin: 0 10px; }
-              .amount-transfer { font-weight: 700; color: #16a34a; font-size: 16px; }
+              .person-container { display: flex; align-items: center; flex: 1; }
+              .person { font-weight: 700; color: #334155; font-size: 20px; }
+              .arrow { color: #94a3b8; font-weight: bold; margin: 0 12px; font-size: 20px; }
+              .amount-transfer { font-weight: 800; color: #16a34a; font-size: 22px; background: #dcfce7; padding: 8px 16px; border-radius: 12px; white-space: nowrap; }
 
-              .participant { border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 20px; page-break-inside: avoid; }
-              .header { font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 16px; display: flex; justify-content: space-between; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
-              .item { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; color: #475569; align-items: flex-start; }
-              .item-title { flex: 1; padding-right: 10px; }
-              .item-split { display: block; font-size: 12px; color: #94a3b8; margin-top: 2px; }
-              .totals { margin-top: 16px; font-size: 14px; background-color: #f8fafc; padding: 16px; border-radius: 8px; }
-              .totals div { display: flex; justify-content: space-between; margin-bottom: 8px; color: #475569; }
+              .participant { border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 24px; page-break-inside: avoid; }
+              .participant-name { font-size: 26px; font-weight: 800; color: #0f172a; margin: 0 0 20px 0; padding-bottom: 16px; border-bottom: 2px solid #f1f5f9; }
+              
+              .item { display: flex; justify-content: space-between; margin-bottom: 16px; font-size: 18px; color: #334155; align-items: flex-start; }
+              .item-title { flex: 1; padding-right: 16px; font-weight: 600; }
+              .item-split { display: block; font-size: 16px; color: #64748b; margin-top: 4px; font-weight: 500; }
+              .item-amount { font-weight: 700; color: #0f172a; }
+              
+              .totals { margin-top: 24px; font-size: 18px; background-color: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
+              .totals div { display: flex; justify-content: space-between; margin-bottom: 12px; color: #475569; font-weight: 600; }
               .totals div:last-child { margin-bottom: 0; }
-              .balance { font-weight: 800; font-size: 16px; margin-top: 12px !important; padding-top: 12px; border-top: 1px solid #cbd5e1; }
+              .balance { font-weight: 800 !important; font-size: 24px !important; margin-top: 16px !important; padding-top: 16px; border-top: 2px dashed #cbd5e1; }
               .positive { color: #16a34a !important; }
               .negative { color: #dc2626 !important; }
               .neutral { color: #64748b !important; }
             </style>
           </head>
           <body>
-            <div class="container">
-              <h1>Fechamento: ${eventName}</h1>
-              <div class="subtitle">Resumo completo gerado pelo Divisa Justa</div>
+            <h1 class="header-title">Fechamento: ${eventName}</h1>
+            <div class="header-subtitle">Resumo completo gerado pelo Divisa Justa</div>
 
-              <div class="settlements-card">
-                <h2>💸 Quem paga quem?</h2>
-                ${
-                  settlements.length > 0
-                    ? settlements
-                        .map(
-                          (s) => `
-                  <div class="settlement-row">
+            <div class="settlements-card">
+              <h2 class="section-title">💸 Quem paga quem?</h2>
+              ${
+                settlements.length > 0
+                  ? settlements
+                      .map(
+                        (s) => `
+                <div class="settlement-row">
+                  <div class="person-container">
                     <span class="person">${s.from}</span>
                     <span class="arrow">➔</span>
                     <span class="person">${s.to}</span>
-                    <span class="amount-transfer">${currencySymbol} ${s.amount.toFixed(2).replace(".", ",")}</span>
                   </div>
-                `,
-                        )
-                        .join("")
-                    : `<div style="color: #64748b; font-style: italic;">${t("detailed_summary.all_settled")}</div>`
-                }
-              </div>
+                  <span class="amount-transfer">${currencySymbol} ${s.amount.toFixed(2).replace(".", ",")}</span>
+                </div>
+              `,
+                      )
+                      .join("")
+                  : `<div style="color: #64748b; font-style: italic; font-size: 18px;">${t("detailed_summary.all_settled")}</div>`
+              }
+            </div>
 
             ${summaryData
               .map((p) => {
@@ -340,35 +346,35 @@ export default function DetailedSummaryScreen() {
                     ? p.consumedItems
                         .map((item) => {
                           const assumedHtml = item.assumedFromName
-                            ? `<span class="item-split" style="color: #8b5cf6; font-weight: 600; margin-top: 4px;">Ajuda de ${item.assumedFromName}</span>`
+                            ? `<span class="item-split" style="color: #8b5cf6; font-weight: 700; margin-top: 6px;">🤝 Ajuda de ${item.assumedFromName}</span>`
                             : "";
                           return `
-                    <div class="item">
-                      <div class="item-title">
-                        ${item.title} ${item.splitCount > 1 ? `<span class="item-split">${t("detailed_summary.divided_by", { count: item.splitCount })} • ${t("participant_summary_card.total_item", { amount: `${currencySymbol} ${item.totalItemAmount.toFixed(2).replace(".", ",")}` })}</span>` : ""}
-                        ${assumedHtml}
-                      </div>
-                      <div style="font-weight: 600;">${currencySymbol} ${item.portionAmount.toFixed(2).replace(".", ",")}</div>
+                  <div class="item">
+                    <div class="item-title">
+                      ${item.title} 
+                      ${item.splitCount > 1 ? `<span class="item-split">${t("detailed_summary.divided_by", { count: item.splitCount })} • ${t("participant_summary_card.total_item", { amount: `${currencySymbol} ${item.totalItemAmount.toFixed(2).replace(".", ",")}` })}</span>` : ""}
+                      ${assumedHtml}
                     </div>
-                  `;
+                    <div class="item-amount">${currencySymbol} ${item.portionAmount.toFixed(2).replace(".", ",")}</div>
+                  </div>
+                `;
                         })
                         .join("")
-                    : `<div class="item"><span>${t("detailed_summary.no_items_consumed")}</span></div>`;
+                    : `<div class="item"><span style="color: #94a3b8; font-style: italic;">${t("detailed_summary.no_items_consumed")}</span></div>`;
 
                 return `
-                <div class="participant">
-                  <div class="header">${p.name}</div>
-                  ${itemsHtml}
-                  <div class="totals">
-                    <div><span>${t("detailed_summary.total_consumed")}</span> <span>${currencySymbol} ${p.totalConsumed.toFixed(2).replace(".", ",")}</span></div>
-                    <div><span>${t("detailed_summary.total_paid")}</span> <span>${currencySymbol} ${p.totalPaid.toFixed(2).replace(".", ",")}</span></div>
-                    <div class="balance ${statusColor}"><span>${statusText}</span> <span>${currencySymbol} ${Math.abs(balance).toFixed(2).replace(".", ",")}</span></div>
-                  </div>
+              <div class="participant">
+                <h3 class="participant-name">${p.name}</h3>
+                ${itemsHtml}
+                <div class="totals">
+                  <div><span>${t("detailed_summary.total_consumed")}</span> <span>${currencySymbol} ${p.totalConsumed.toFixed(2).replace(".", ",")}</span></div>
+                  <div><span>${t("detailed_summary.total_paid")}</span> <span>${currencySymbol} ${p.totalPaid.toFixed(2).replace(".", ",")}</span></div>
+                  <div class="balance ${statusColor}"><span>${statusText}</span> <span>${currencySymbol} ${Math.abs(balance).toFixed(2).replace(".", ",")}</span></div>
                 </div>
-              `;
+              </div>
+            `;
               })
               .join("")}
-            </div>
           </body>
         </html>
       `;
@@ -388,28 +394,25 @@ export default function DetailedSummaryScreen() {
         to: newUri,
       });
 
-      const isAvailable = await Sharing.isAvailableAsync();
-
-      if (isAvailable) {
+      // Abre a tela nativa de compartilhamento para o usuário enviar para o WhatsApp, Salvar, etc.
+      if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(newUri, {
           mimeType: "application/pdf",
-          dialogTitle: t("detailed_summary.pdf_share_title", { eventName }),
-          UTI: "com.adobe.pdf", // Identificador de tipo de arquivo no iOS
+          dialogTitle: t("detailed_summary.pdf_share_title", {
+            eventName: eventName || "DivisaJusta",
+          }),
+          UTI: "com.adobe.pdf", // Identificador nativo para iOS reconhecer como PDF
         });
       }
     } catch (error) {
       console.error("Erro ao gerar/compartilhar PDF:", error);
+      alert("Ocorreu um erro ao tentar compartilhar o PDF.");
     }
   };
 
   const renderHeader = () => (
     <View style={{ marginBottom: theme.spacing[6] }}>
-      <View
-        style={[
-          styles.settlementsCard,
-          { backgroundColor: T.bgCardRaised, borderColor: T.border },
-        ]}
-      >
+      <View style={[styles.settlementsCard, { backgroundColor: T.bgCard }]}>
         <View style={styles.settlementsHeader}>
           <DollarSign size={24} color={T.primary} />
           <Text
@@ -500,7 +503,7 @@ export default function DetailedSummaryScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: T.bgScreen }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: T.bg }]}>
       <View style={styles.header}>
         <Pressable
           onPress={() => router.back()}

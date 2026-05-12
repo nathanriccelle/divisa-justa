@@ -42,7 +42,7 @@ export function ParticipantCheckbox({
             theme.textStyles.subheadline,
             {
               fontWeight: "bold",
-              color: isOwner ? T.textOnLime : T.textPrimary,
+              color: isOwner ? T.textOnLime : T.textSecondary,
             },
           ]}
         >
