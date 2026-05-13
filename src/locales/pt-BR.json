@@ -165,6 +165,8 @@
     "tax_modal_title": "Quem paga a taxa?",
     "absorb_tax_title": "Absorver taxa recusada?",
     "absorb_tax_desc": "O valor recusado será dividido entre os pagantes. Se desativado, o valor total da taxa diminui.",
+    "tax_proportional_title": "Dividir proporcionalmente?",
+    "tax_proportional_desc": "Quem consumiu mais paga uma fatia maior da taxa. Se desativado, é dividida igualmente.",
     "confirm_btn": "Confirmar",
     "assume_account": "Cobrir um Amigo",
     "assume_account_desc": "Alguém vai pagar a parte de outra pessoa?",

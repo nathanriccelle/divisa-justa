@@ -37,7 +37,7 @@ export function ExpenseItem({
     >
       {/* Ícone */}
       <View style={[styles.iconBox, { backgroundColor: T.bgCardRaised }]}>
-        <Receipt size={24} color={T.textPrimary} />
+        <Receipt size={24} color={T.textSecondary} />
       </View>
 
       {/* Título e Quantidade */}

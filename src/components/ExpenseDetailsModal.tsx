@@ -1,7 +1,15 @@
 import { ArrowRight, Trash2, X } from "lucide-react-native";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Alert,
+  FlatList,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { theme } from "../theme";
 
 const T = theme.colors;
@@ -63,6 +71,24 @@ export function ExpenseDetailsModal({
     .map((p) => p.name)
     .join(", ");
 
+  const debtList =
+    debtors.length > 0
+      ? debtors.flatMap((debtor) => {
+          const payerList =
+            payers.length > 0
+              ? payers
+              : [{ id: "unknown", name: t("expense_details_modal.unknown") }];
+          const splitAmount = costPerPerson / payerList.length;
+
+          return payerList.map((payer) => ({
+            key: `${debtor.id}-${payer.id}`,
+            debtorName: debtor.name,
+            payerName: payer.name,
+            amount: splitAmount,
+          }));
+        })
+      : [];
+
   const handleDeleteConfirm = () => {
     Alert.alert(
       t("expense_details_modal.delete_expense_title"),
@@ -88,8 +114,11 @@ export function ExpenseDetailsModal({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
-        <View style={[styles.content, { backgroundColor: T.bg }]}>
+      <Pressable style={styles.overlay} onPress={onClose}>
+        <Pressable
+          style={[styles.content, { backgroundColor: T.bg }]}
+          onPress={() => {}}
+        >
           <View style={[styles.header, { borderBottomColor: T.border }]}>
             <Text style={[theme.textStyles.title2, { color: T.textPrimary }]}>
               {expense.title}
@@ -144,22 +173,14 @@ export function ExpenseDetailsModal({
               {t("expense_details_modal.division_summary")}
             </Text>
 
-            {debtors.length > 0 ? (
-              debtors.flatMap((debtor) => {
-                const payerList =
-                  payers.length > 0
-                    ? payers
-                    : [
-                        {
-                          id: "unknown",
-                          name: t("expense_details_modal.unknown"),
-                        },
-                      ];
-                const splitAmount = costPerPerson / payerList.length;
-
-                return payerList.map((payer) => (
+            {debtList.length > 0 ? (
+              <FlatList
+                data={debtList}
+                style={{ maxHeight: 250 }}
+                showsVerticalScrollIndicator={false}
+                keyExtractor={(item) => item.key}
+                renderItem={({ item }) => (
                   <View
-                    key={`${debtor.id}-${payer.id}`}
                     style={[styles.debtRow, { borderBottomColor: T.border }]}
                   >
                     <Text
@@ -168,7 +189,7 @@ export function ExpenseDetailsModal({
                         { color: T.textPrimary, fontWeight: "bold" },
                       ]}
                     >
-                      {debtor.name}
+                      {item.debtorName}
                     </Text>
                     <ArrowRight
                       size={16}
@@ -181,18 +202,18 @@ export function ExpenseDetailsModal({
                         { color: T.primary, fontWeight: "bold" },
                       ]}
                     >
-                      {payer.name}
+                      {item.payerName}
                     </Text>
                     <View style={{ flex: 1 }} />
                     <Text
                       style={[theme.textStyles.headline, { color: T.negative }]}
                     >
                       {currencySymbol}{" "}
-                      {splitAmount.toFixed(2).replace(".", ",")}
+                      {item.amount.toFixed(2).replace(".", ",")}
                     </Text>
                   </View>
-                ));
-              })
+                )}
+              />
             ) : (
               <Text
                 style={[
@@ -234,8 +255,8 @@ export function ExpenseDetailsModal({
               </Pressable>
             )}
           </View>
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }

@@ -69,6 +69,7 @@ export default function BalancesScreen() {
   const [showTaxModal, setShowTaxModal] = useState(false);
   const [taxOptOutIds, setTaxOptOutIds] = useState<string[]>([]);
   const [absorbTax, setAbsorbTax] = useState(false);
+  const [isTaxProportional, setIsTaxProportional] = useState(true);
 
   // NOVO: Estados para Assumir Contas
   const [assumptions, setAssumptions] = useState<Record<string, string>>({});
@@ -160,12 +161,19 @@ export default function BalancesScreen() {
 
   let finalTaxAmount = 0;
   let taxPerPerson = 0;
+  let totalConsumptionOfPayingPeople = 0;
 
   if (isTaxEnabled && payingPeopleCount > 0) {
     if (absorbTax) finalTaxAmount = originalTaxAmount;
     else finalTaxAmount = originalTaxAmount * (payingPeopleCount / totalPeople);
 
     taxPerPerson = finalTaxAmount / payingPeopleCount;
+
+    userStats.forEach((stat) => {
+      if (!taxOptOutIds.includes(stat.id)) {
+        totalConsumptionOfPayingPeople += stat.consumed;
+      }
+    });
   }
 
   const effectiveTaxMultiplier =
@@ -176,7 +184,15 @@ export default function BalancesScreen() {
     const finalPaid = stat.paid * effectiveTaxMultiplier;
     const isPayingTax = isTaxEnabled && !taxOptOutIds.includes(stat.id);
 
-    const myTax = isPayingTax ? taxPerPerson : 0;
+    let myTax = 0;
+    if (isPayingTax) {
+      if (isTaxProportional && totalConsumptionOfPayingPeople > 0) {
+        myTax =
+          finalTaxAmount * (stat.consumed / totalConsumptionOfPayingPeople);
+      } else {
+        myTax = taxPerPerson;
+      }
+    }
 
     const finalConsumed = stat.consumed + myTax;
     const balance = finalPaid - finalConsumed;
@@ -316,84 +332,124 @@ export default function BalancesScreen() {
         </View>
 
         {isTaxEnabled && (
-          <View
-            style={{
-              marginTop: theme.spacing[4],
-              paddingTop: theme.spacing[4],
-              borderTopWidth: 1,
-              borderTopColor: T.border,
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <View style={styles.stepperContainer}>
+          <>
+            <View
+              style={{
+                marginTop: theme.spacing[4],
+                paddingTop: theme.spacing[4],
+                borderTopWidth: 1,
+                borderTopColor: T.border,
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <View style={styles.stepperContainer}>
+                <Pressable
+                  onPress={() => setTaxPercentage((p) => Math.max(0, p - 1))}
+                  style={({ pressed }) => [
+                    styles.stepperBtn,
+                    { borderColor: T.border, backgroundColor: T.bgCardRaised },
+                    pressed && { opacity: 0.7 },
+                  ]}
+                >
+                  <Minus size={14} color={T.textPrimary} />
+                </Pressable>
+                <Text
+                  style={[
+                    theme.textStyles.subheadline,
+                    {
+                      color: T.textPrimary,
+                      marginHorizontal: 12,
+                      fontWeight: "bold",
+                    },
+                  ]}
+                >
+                  {taxPercentage}%
+                </Text>
+                <Pressable
+                  onPress={() => setTaxPercentage((p) => p + 1)}
+                  style={({ pressed }) => [
+                    styles.stepperBtn,
+                    { borderColor: T.border, backgroundColor: T.bgCardRaised },
+                    pressed && { opacity: 0.7 },
+                  ]}
+                >
+                  <Plus size={14} color={T.textPrimary} />
+                </Pressable>
+              </View>
+
               <Pressable
-                onPress={() => setTaxPercentage((p) => Math.max(0, p - 1))}
+                onPress={() => setShowTaxModal(true)}
                 style={({ pressed }) => [
-                  styles.stepperBtn,
-                  { borderColor: T.border, backgroundColor: T.bgCardRaised },
-                  pressed && { opacity: 0.7 },
-                ]}
-              >
-                <Minus size={14} color={T.textPrimary} />
-              </Pressable>
-              <Text
-                style={[
-                  theme.textStyles.subheadline,
                   {
-                    color: T.textPrimary,
-                    marginHorizontal: 12,
-                    fontWeight: "bold",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    backgroundColor: T.bgCardRaised,
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    borderRadius: 8,
+                    borderWidth: 1,
+                    borderColor: T.border,
                   },
+                  pressed && { backgroundColor: T.border },
                 ]}
               >
-                {taxPercentage}%
-              </Text>
-              <Pressable
-                onPress={() => setTaxPercentage((p) => p + 1)}
-                style={({ pressed }) => [
-                  styles.stepperBtn,
-                  { borderColor: T.border, backgroundColor: T.bgCardRaised },
-                  pressed && { opacity: 0.7 },
-                ]}
-              >
-                <Plus size={14} color={T.textPrimary} />
+                <Users size={14} color={T.primary} style={{ marginRight: 6 }} />
+                <Text
+                  style={{
+                    color: T.textPrimary,
+                    fontSize: 12,
+                    fontWeight: "bold",
+                    marginRight: 4,
+                  }}
+                >
+                  {taxOptOutIds.length === 0
+                    ? t("balances.tax_everyone")
+                    : t("balances.tax_custom", { count: payingPeopleCount })}
+                </Text>
+                <ChevronRight size={14} color={T.textSecondary} />
               </Pressable>
             </View>
 
-            <Pressable
-              onPress={() => setShowTaxModal(true)}
-              style={({ pressed }) => [
-                {
-                  flexDirection: "row",
-                  alignItems: "center",
-                  backgroundColor: T.bgCardRaised,
-                  paddingHorizontal: 12,
-                  paddingVertical: 8,
-                  borderRadius: 8,
-                  borderWidth: 1,
-                  borderColor: T.border,
-                },
-                pressed && { backgroundColor: T.border },
-              ]}
+            <View
+              style={{
+                marginTop: theme.spacing[4],
+                paddingTop: theme.spacing[4],
+                borderTopWidth: 1,
+                borderTopColor: T.border,
+              }}
             >
-              <Users size={14} color={T.primary} style={{ marginRight: 6 }} />
-              <Text
+              <View
                 style={{
-                  color: T.textPrimary,
-                  fontSize: 12,
-                  fontWeight: "bold",
-                  marginRight: 4,
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 8,
                 }}
               >
-                {taxOptOutIds.length === 0
-                  ? t("balances.tax_everyone")
-                  : t("balances.tax_custom", { count: payingPeopleCount })}
+                <Text
+                  style={[
+                    theme.textStyles.headline,
+                    { color: T.textPrimary, flex: 1, paddingRight: 8 },
+                  ]}
+                >
+                  {t("balances.tax_proportional_title")}
+                </Text>
+                <Switch
+                  value={isTaxProportional}
+                  onValueChange={setIsTaxProportional}
+                  trackColor={{ false: T.border, true: T.primary }}
+                  thumbColor={Platform.OS === "ios" ? "#FFF" : "#FFF"}
+                />
+              </View>
+              <Text
+                style={[theme.textStyles.footnote, { color: T.textSecondary }]}
+              >
+                {t("balances.tax_proportional_desc")}
               </Text>
-              <ChevronRight size={14} color={T.textSecondary} />
-            </Pressable>
-          </View>
+            </View>
+          </>
         )}
       </View>
 
@@ -596,6 +652,8 @@ export default function BalancesScreen() {
                 taxPerPerson: taxPerPerson.toString(),
                 taxOptOutIds: JSON.stringify(taxOptOutIds),
                 assumptions: JSON.stringify(assumptions),
+                isTaxProportional: isTaxProportional.toString(),
+                finalTaxAmount: finalTaxAmount.toString(),
               },
             });
           }}
@@ -623,9 +681,7 @@ export default function BalancesScreen() {
         onRequestClose={() => setShowTaxModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View
-            style={[styles.modalContent, { backgroundColor: T.bgCardRaised }]}
-          >
+          <View style={[styles.modalContent, { backgroundColor: T.bgCard }]}>
             <View style={[styles.modalHeader, { borderBottomColor: T.border }]}>
               <Text style={[theme.textStyles.title3, { color: T.textPrimary }]}>
                 {t("balances.tax_modal_title")}
@@ -665,7 +721,7 @@ export default function BalancesScreen() {
               {taxOptOutIds.length > 0 && (
                 <View
                   style={{
-                    marginTop: 24,
+                    marginTop: 16,
                     padding: 16,
                     backgroundColor: T.bgCard,
                     borderRadius: 12,

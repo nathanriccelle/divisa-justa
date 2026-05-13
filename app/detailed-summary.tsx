@@ -49,12 +49,16 @@ export default function DetailedSummaryScreen() {
     taxPerPerson: taxPerPersonParam,
     taxOptOutIds: taxOptOutIdsParam,
     assumptions,
+    isTaxProportional: isTaxProportionalParam,
+    finalTaxAmount: finalTaxAmountParam,
   } = useLocalSearchParams<{
     eventId: string;
     taxMultiplier: string;
     taxPerPerson: string;
     taxOptOutIds: string;
     assumptions: string;
+    isTaxProportional: string;
+    finalTaxAmount: string;
   }>();
 
   const formatarDataCurta = (dataBanco: any) => {
@@ -74,6 +78,8 @@ export default function DetailedSummaryScreen() {
   const parsedAssumptions: Record<string, string> = assumptions
     ? JSON.parse(assumptions)
     : {};
+  const isTaxProportional = isTaxProportionalParam === "true";
+  const finalTaxAmount = parseFloat(finalTaxAmountParam || "0");
 
   const [currencySymbol, setCurrencySymbol] = useState("R$");
   const [eventName, setEventName] = useState("");
@@ -170,23 +176,48 @@ export default function DetailedSummaryScreen() {
         });
       });
 
-      // Aplica a Taxa de Serviço DIVIDIDA IGUALMENTE
-      if (parsedTaxPerPerson > 0) {
-        const taxSplitCount = participantsData.length - parsedOptOutIds.length;
-        const totalTaxAmount = parsedTaxPerPerson * taxSplitCount;
+      let totalConsumptionOfPayingPeople = 0;
+      if (isTaxProportional) {
         participantsData.forEach((p) => {
           if (summaries[p.id] && !parsedOptOutIds.includes(p.id)) {
-            summaries[p.id].consumedItems.push({
-              id: `tax_${p.id}`,
-              title: t("balances.service_fee"),
-              portionAmount: parsedTaxPerPerson,
-              totalItemAmount: totalTaxAmount,
-              splitCount: taxSplitCount,
-              payerName: "",
-              isPayer: false,
-              date: "-",
-            });
-            summaries[p.id].totalConsumed += parsedTaxPerPerson;
+            totalConsumptionOfPayingPeople += summaries[p.id].totalConsumed;
+          }
+        });
+      }
+
+      // Aplica a Taxa de Serviço
+      if (parsedTaxPerPerson > 0 || finalTaxAmount > 0) {
+        const taxSplitCount = participantsData.length - parsedOptOutIds.length;
+        const totalTaxAmount = isTaxProportional
+          ? finalTaxAmount
+          : parsedTaxPerPerson * taxSplitCount;
+        participantsData.forEach((p) => {
+          if (summaries[p.id] && !parsedOptOutIds.includes(p.id)) {
+            let myTax = 0;
+            if (isTaxProportional) {
+              myTax =
+                totalConsumptionOfPayingPeople > 0
+                  ? finalTaxAmount *
+                    (summaries[p.id].totalConsumed /
+                      totalConsumptionOfPayingPeople)
+                  : 0;
+            } else {
+              myTax = parsedTaxPerPerson;
+            }
+
+            if (myTax > 0) {
+              summaries[p.id].consumedItems.push({
+                id: `tax_${p.id}`,
+                title: t("balances.service_fee"),
+                portionAmount: myTax,
+                totalItemAmount: totalTaxAmount,
+                splitCount: taxSplitCount,
+                payerName: "",
+                isPayer: false,
+                date: "-",
+              });
+              summaries[p.id].totalConsumed += myTax;
+            }
           }
         });
       }
