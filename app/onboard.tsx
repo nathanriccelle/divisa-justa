@@ -17,49 +17,29 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { CURRENCY_LIST } from "../src/components/CurrencySelector";
+import { getSortedCurrencies } from "../src/components/CurrencySelector";
 import { theme } from "../src/theme";
 
 const T = theme.colors;
 
-const CURRENCIES = [
-  { label: "Real Brasileiro", symbol: "R$" },
-  { label: "Dólar Americano", symbol: "$" },
-  { label: "Euro", symbol: "€" },
-  { label: "Libra Esterlina", symbol: "£" },
-  { label: "Iene Japonês", symbol: "¥" },
-  { label: "Dólar Australiano", symbol: "A$" },
-  { label: "Dólar Canadense", symbol: "C$" },
-  { label: "Franco Suíço", symbol: "CHF" },
-  { label: "Yuan Chinês", symbol: "CN¥" },
-  { label: "Rúpia Indiana", symbol: "₹" },
-  { label: "Peso Argentino", symbol: "AR$" },
-  { label: "Peso Chileno", symbol: "CL$" },
-  { label: "Peso Colombiano", symbol: "CO$" },
-  { label: "Sol Peruano", symbol: "S/" },
-  { label: "Peso Uruguaio", symbol: "$U" },
-  { label: "Guarani Paraguaio", symbol: "₲" },
-  { label: "Boliviano", symbol: "Bs." },
-  { label: "Peso Mexicano", symbol: "MX$" },
-  { label: "Dólar de Singapura", symbol: "S$" },
-  { label: "Dólar Neozelandês", symbol: "NZ$" },
-  { label: "Rand Sul-Africano", symbol: "R" },
-  { label: "Rublo Russo", symbol: "₽" },
-  { label: "Dirham dos Emirados", symbol: "د.إ" },
-];
-
 export default function OnboardScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [step, setStep] = useState(1);
   const [userName, setUserName] = useState("");
-  const [selectedCurrencyCode, setSelectedCurrencyCode] = useState("BRL");
+  const sortedCurrencies = React.useMemo(
+    () => getSortedCurrencies(i18n.language),
+    [i18n.language],
+  );
+  const [selectedCurrencyCode, setSelectedCurrencyCode] = useState(
+    sortedCurrencies[0].code,
+  );
   const { saveOnboardData } = useUser();
 
   const handleFinishOnboarding = async () => {
     if (!userName.trim()) {
       Alert.alert(
-        "Nome não informado",
-        "É necessário informar o seu nome para prosseguir com o acesso ao aplicativo.",
+        t("onboard.alert_no_name_title"),
+        t("onboard.alert_no_name_desc"),
       );
       return;
     }
@@ -173,7 +153,7 @@ export default function OnboardScreen() {
                     { color: T.textOnLime, marginRight: theme.spacing[4] },
                   ]}
                 >
-                  Próximo
+                  {t("onboard.next_btn")}
                 </Text>
                 <ArrowRight size={20} color={T.textOnLime} />
               </Pressable>
@@ -183,7 +163,7 @@ export default function OnboardScreen() {
           {step === 3 && (
             <View style={styles.stepContainer}>
               <Text style={[styles.title, { color: T.textPrimary }]}>
-                Como podemos te chamar?
+                {t("onboard.step3_title")}
               </Text>
 
               <View style={styles.inputGroup}>
@@ -195,7 +175,7 @@ export default function OnboardScreen() {
                 >
                   <TextInput
                     style={[styles.textInput, { color: T.textPrimary }]}
-                    placeholder="Digite aqui o seu nome"
+                    placeholder={t("onboard.name_placeholder")}
                     placeholderTextColor={T.textDisabled}
                     value={userName}
                     onChangeText={setUserName}
@@ -209,14 +189,14 @@ export default function OnboardScreen() {
                 style={[styles.inputGroup, { marginTop: theme.spacing[2] }]}
               >
                 <Text style={[styles.label, { color: T.textSecondary }]}>
-                  Moeda Principal
+                  {t("onboard.main_currency")}
                 </Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.currencyRow}
                 >
-                  {CURRENCY_LIST.map((currency) => {
+                  {sortedCurrencies.map((currency) => {
                     if (!currency) return null;
                     const isSelected = selectedCurrencyCode === currency.code;
                     return (
@@ -256,7 +236,7 @@ export default function OnboardScreen() {
                             },
                           ]}
                         >
-                          {currency.name}
+                          {t(`currencies.${currency.code}`, currency.name)}
                         </Text>
                       </Pressable>
                     );
@@ -282,7 +262,7 @@ export default function OnboardScreen() {
                 <Text
                   style={[theme.textStyles.headline, { color: T.textOnLime }]}
                 >
-                  Entrar no App
+                  {t("onboard.enter_app")}
                 </Text>
               </Pressable>
             </View>
@@ -298,12 +278,12 @@ const styles = StyleSheet.create({
     flex: 1.2,
     width: "100%",
     position: "relative",
-    backgroundColor: "#D5E7B5",
+    backgroundColor: "#BEFF6C",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 10,
-    paddingTop: 40,
-    paddingBottom: 70,
+    paddingTop: 20,
+    paddingBottom: 20,
   },
   image: {
     width: "100%",
@@ -314,7 +294,7 @@ const styles = StyleSheet.create({
   },
   bottomSheet: {
     flex: 1,
-    marginTop: -90,
+    marginTop: -110,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     overflow: "hidden",

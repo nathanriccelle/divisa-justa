@@ -1,7 +1,8 @@
 {
   "common": {
     "cancel": "Cancelar",
-    "confirm": "Confirmar"
+    "confirm": "Confirmar",
+    "select_currency": "Selecionar Moeda"
   },
   "home": {
     "greeting_morning": "Bom dia,\n{{name}}",
@@ -41,20 +42,30 @@
     "title_part3": "Você no comando!",
     "subtitle_part3": "Seus dados ficam seguros apenas no seu celular. Você anota asdespesas da galera e nós entregamos o resumo mastigado.",
     "subtitle": "Crie eventos, adicione despesas e saiba exatamente quem deve para quem. Sem matemática complicada, sem estresse.",
-    "start_now": "Começar agora"
+    "start_now": "Começar agora",
+    "next_btn": "Próximo",
+    "step3_title": "Como podemos te chamar?",
+    "name_placeholder": "Digite aqui o seu nome",
+    "main_currency": "Moeda Principal",
+    "enter_app": "Entrar no App",
+    "alert_no_name_title": "Nome não informado",
+    "alert_no_name_desc": "É necessário informar o seu nome para prosseguir com o acesso ao aplicativo."
   },
   "settings": {
     "title": "Configurações",
     "language": "Idioma",
     "portuguese": "Português",
     "english": "Inglês",
+    "spanish": "Espanhol",
+    "french": "Francês",
+    "german": "Alemão",
     "reset_app": "Apagar todos os dados"
   },
   "detailed_summary": {
     "title": "Resumo Detalhado",
     "unknown": "Desconhecido",
     "who_pays_who": "Quem paga quem?",
-    "all_settled": "Ninguém deve nada. Tudo resolvido! 🎉",
+    "all_settled": "Ninguém deve nada. Tudo resolvido!",
     "individual_summary": "RESUMO INDIVIDUAL",
     "export_pdf": "Exportar Resumo em PDF",
     "pdf_closing": "Fechamento:",
@@ -232,6 +243,45 @@
     "total_consumed": "Total Consumido",
     "total_paid": "Total Pago",
     "assumed_from": "Ajuda de {{name}}",
-    "total_item": "Total: {{amount}}"
+    "total_item": "Total: {{amount}}",
+    "settled": "QUITADO",
+    "to_receive": "A RECEBER",
+    "to_pay": "A PAGAR"
+  },
+  "currencies": {
+    "BRL": "Real Brasileiro",
+    "USD": "Dólar Americano",
+    "EUR": "Euro",
+    "GBP": "Libra Esterlina",
+    "JPY": "Iene Japonês",
+    "AUD": "Dólar Australiano",
+    "CAD": "Dólar Canadense",
+    "CHF": "Franco Suíço",
+    "CNY": "Yuan Chinês",
+    "INR": "Rúpia Indiana",
+    "ARS": "Peso Argentino",
+    "CLP": "Peso Chileno",
+    "COP": "Peso Colombiano",
+    "PEN": "Sol Peruano",
+    "UYU": "Peso Uruguaio",
+    "PYG": "Guarani Paraguaio",
+    "BOB": "Boliviano",
+    "MXN": "Peso Mexicano",
+    "SGD": "Dólar de Singapura",
+    "NZD": "Dólar Neozelandês",
+    "ZAR": "Rand Sul-Africano",
+    "RUB": "Rublo Russo",
+    "AED": "Dirham dos Emirados"
+  },
+  "pdf_export": {
+    "closing": "Fechamento:",
+    "subtitle": "Resumo completo gerado pelo Divisa Justa",
+    "who_pays_who": "💸 Quem paga quem?",
+    "help_from": "🤝 Ajuda de {{name}}",
+    "filename_prefix": "Resumo_"
+  },
+  "empty_items_state": {
+    "title": "A conta está zerada!",
+    "description": "Nenhum gasto foi adicionado a este evento. Toque no botão de \"+\" abaixo para registar o primeiro consumo."
   }
 }

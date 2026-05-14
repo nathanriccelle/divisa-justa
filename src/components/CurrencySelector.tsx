@@ -1,5 +1,6 @@
 import { Banknote, ChevronDown, X } from "lucide-react-native";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   FlatList,
   Modal,
@@ -50,6 +51,54 @@ export const CURRENCY_LIST: Currency[] = [
   { code: "AED", name: "Dirham dos Emirados", symbol: "د.إ" },
 ];
 
+export function getSortedCurrencies(language: string): Currency[] {
+  const lang = language ? language.substring(0, 2).toLowerCase() : "";
+
+  let primaryCodes: string[] = [];
+
+  switch (lang) {
+    case "pt":
+      primaryCodes = ["BRL", "EUR", "USD"];
+      break;
+    case "es":
+      primaryCodes = [
+        "EUR",
+        "MXN",
+        "ARS",
+        "CLP",
+        "COP",
+        "PEN",
+        "UYU",
+        "PYG",
+        "BOB",
+        "USD",
+      ];
+      break;
+    case "en":
+      primaryCodes = ["USD", "GBP", "CAD", "AUD", "NZD", "SGD", "ZAR", "EUR"];
+      break;
+    case "fr":
+      primaryCodes = ["EUR", "CAD", "CHF", "USD"];
+      break;
+    case "de":
+      primaryCodes = ["EUR", "CHF", "USD"];
+      break;
+    default:
+      primaryCodes = ["USD", "EUR", "GBP"];
+      break;
+  }
+
+  const primaryCurrencies = primaryCodes
+    .map((code) => CURRENCY_LIST.find((c) => c.code === code))
+    .filter(Boolean) as Currency[];
+
+  const otherCurrencies = CURRENCY_LIST.filter(
+    (c) => !primaryCodes.includes(c.code),
+  );
+
+  return [...primaryCurrencies, ...otherCurrencies];
+}
+
 type CurrencySelectorProps = {
   selectedCurrency: Currency;
   onSelectCurrency: (currency: Currency) => void;
@@ -59,7 +108,12 @@ export function CurrencySelector({
   selectedCurrency,
   onSelectCurrency,
 }: CurrencySelectorProps) {
+  const { t, i18n } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
+  const sortedCurrencies = useMemo(
+    () => getSortedCurrencies(i18n.language),
+    [i18n.language],
+  );
 
   const handleSelect = (currency: Currency) => {
     onSelectCurrency(currency);
@@ -78,7 +132,8 @@ export function CurrencySelector({
       >
         <Banknote size={20} color={T.textSecondary} style={styles.inputIcon} />
         <Text style={[styles.textInput, { color: T.textPrimary, flex: 1 }]}>
-          {selectedCurrency.name} ({selectedCurrency.symbol})
+          {t(`currencies.${selectedCurrency.code}`, selectedCurrency.name)} (
+          {selectedCurrency.symbol})
         </Text>
         <ChevronDown size={20} color={T.textSecondary} />
       </Pressable>
@@ -96,7 +151,7 @@ export function CurrencySelector({
           >
             <View style={styles.modalHeader}>
               <Text style={[theme.textStyles.title3, { color: T.textPrimary }]}>
-                Selecionar Moeda
+                {t("common.select_currency")}
               </Text>
               <Pressable
                 onPress={() => setIsVisible(false)}
@@ -107,7 +162,7 @@ export function CurrencySelector({
             </View>
 
             <FlatList
-              data={CURRENCY_LIST}
+              data={sortedCurrencies}
               keyExtractor={(item) => item.code}
               showsVerticalScrollIndicator={false}
               renderItem={({ item }) => {
@@ -132,7 +187,7 @@ export function CurrencySelector({
                           },
                         ]}
                       >
-                        {item.name}
+                        {t(`currencies.${item.code}`, item.name)}
                       </Text>
                       <Text
                         style={[

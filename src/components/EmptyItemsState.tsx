@@ -1,11 +1,14 @@
 import { ShoppingBasket } from "lucide-react-native";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { StyleSheet, Text, View } from "react-native";
 import { theme } from "../theme";
 
 const T = theme.colors;
 
 export function EmptyItemsState() {
+  const { t } = useTranslation();
+
   return (
     <View
       style={[
@@ -31,7 +34,7 @@ export function EmptyItemsState() {
           },
         ]}
       >
-        A conta está zerada!
+        {t("empty_items_state.title")}
       </Text>
       <Text
         style={[
@@ -39,8 +42,7 @@ export function EmptyItemsState() {
           { color: T.textSecondary, textAlign: "center", lineHeight: 22 },
         ]}
       >
-        Nenhum gasto foi adicionado a este evento. Toque no botão de "+" abaixo
-        para registar o primeiro consumo.
+        {t("empty_items_state.description")}
       </Text>
     </View>
   );

@@ -1,25 +1,25 @@
 import { router } from "expo-router";
 import {
-  AlertTriangle,
-  ArrowRight,
-  ChevronLeft,
-  PenLine,
-  Plus,
-  Trash2,
-  UserPlus,
+    AlertTriangle,
+    ArrowRight,
+    ChevronLeft,
+    PenLine,
+    Plus,
+    Trash2,
+    UserPlus,
 } from "lucide-react-native";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  Vibration,
-  View,
+    Animated,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    Vibration,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -27,8 +27,9 @@ import { theme } from "../src/theme";
 const T = theme.colors;
 
 import {
-  CURRENCY_LIST,
-  CurrencySelector,
+    CURRENCY_LIST,
+    CurrencySelector,
+    getSortedCurrencies,
 } from "../src/components/CurrencySelector";
 
 import { useUser } from "@/src/contexts/UserContext";
@@ -45,10 +46,11 @@ type Participant = {
 };
 
 export default function CreateEventScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { userName, userCurrency } = useUser();
+  const sortedCurrencies = getSortedCurrencies(i18n.language);
   const defaultCurrency =
-    CURRENCY_LIST.find((c) => c.code === userCurrency) ?? CURRENCY_LIST[0];
+    CURRENCY_LIST.find((c) => c.code === userCurrency) ?? sortedCurrencies[0];
   const [selectedCurrency, setSelectedCurrency] = useState(defaultCurrency);
   const [participants, setParticipants] = useState<Participant[]>([
     {

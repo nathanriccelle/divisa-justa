@@ -331,11 +331,11 @@ export default function DetailedSummaryScreen() {
             </style>
           </head>
           <body>
-            <h1 class="header-title">Fechamento: ${eventName}</h1>
-            <div class="header-subtitle">Resumo completo gerado pelo Divisa Justa</div>
+            <h1 class="header-title">${t("pdf_export.closing")} ${eventName}</h1>
+            <div class="header-subtitle">${t("pdf_export.subtitle")}</div>
 
             <div class="settlements-card">
-              <h2 class="section-title">💸 Quem paga quem?</h2>
+              <h2 class="section-title">${t("pdf_export.who_pays_who")}</h2>
               ${
                 settlements.length > 0
                   ? settlements
@@ -377,7 +377,7 @@ export default function DetailedSummaryScreen() {
                     ? p.consumedItems
                         .map((item) => {
                           const assumedHtml = item.assumedFromName
-                            ? `<span class="item-split" style="color: #8b5cf6; font-weight: 700; margin-top: 6px;">🤝 Ajuda de ${item.assumedFromName}</span>`
+                            ? `<span class="item-split" style="color: #8b5cf6; font-weight: 700; margin-top: 6px;">${t("pdf_export.help_from", { name: item.assumedFromName })}</span>`
                             : "";
                           return `
                   <div class="item">
@@ -418,7 +418,7 @@ export default function DetailedSummaryScreen() {
       const directoryUri = uriParts.join("/") + "/";
 
       const safeEventName = eventName.replace(/[^a-zA-Z0-9]/g, "");
-      const newUri = `${directoryUri}Resumo_${safeEventName || "DivisaJusta"}.pdf`;
+      const newUri = `${directoryUri}${t("pdf_export.filename_prefix")}${safeEventName || "DivisaJusta"}.pdf`;
 
       await FileSystem.moveAsync({
         from: uri,

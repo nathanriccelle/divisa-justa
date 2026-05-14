@@ -557,7 +557,7 @@ export default function BalancesScreen() {
                 <Text
                   style={[
                     theme.textStyles.subheadline,
-                    { fontWeight: "bold", color: T.textPrimary },
+                    { fontWeight: "bold", color: T.textSecondary },
                   ]}
                 >
                   {stat.initials}

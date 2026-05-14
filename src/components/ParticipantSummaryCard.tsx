@@ -52,14 +52,14 @@ export function ParticipantSummaryCard({
   const isToPay = balance < -0.001;
 
   let statusColor: string = T.textSecondary;
-  let statusText: string = "QUITADO";
+  let statusText: string = t("participant_summary_card.settled");
 
   if (isToReceive) {
     statusColor = T.primary;
-    statusText = "A RECEBER";
+    statusText = t("participant_summary_card.to_receive");
   } else if (isToPay) {
     statusColor = T.negative;
-    statusText = "A PAGAR";
+    statusText = t("participant_summary_card.to_pay");
   }
 
   return (

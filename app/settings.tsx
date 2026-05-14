@@ -16,6 +16,10 @@ export default function SettingsScreen() {
 
   // Verifica se o idioma atual é português (trata pt, pt-BR, pt-PT)
   const isPt = i18n.language.startsWith("pt");
+  const isEn = i18n.language.startsWith("en");
+  const isEs = i18n.language.startsWith("es");
+  const isFr = i18n.language.startsWith("fr");
+  const isDe = i18n.language.startsWith("de");
 
   const handleClearData = async () => {
     await clearData();
@@ -63,7 +67,7 @@ export default function SettingsScreen() {
               onPress={() => i18n.changeLanguage("pt-BR")}
             >
               <Text style={[theme.textStyles.body, { color: T.textPrimary }]}>
-                🇧🇷 {t("settings.portuguese")}
+                {t("settings.portuguese")}
               </Text>
               <View style={[styles.radio, isPt && { borderColor: T.primary }]}>
                 {isPt && (
@@ -75,14 +79,71 @@ export default function SettingsScreen() {
             </Pressable>
 
             <Pressable
-              style={styles.row}
+              style={[
+                styles.row,
+                { borderBottomWidth: 1, borderBottomColor: T.border },
+              ]}
               onPress={() => i18n.changeLanguage("en-US")}
             >
               <Text style={[theme.textStyles.body, { color: T.textPrimary }]}>
-                🇺🇸 {t("settings.english")}
+                {t("settings.english")}
               </Text>
-              <View style={[styles.radio, !isPt && { borderColor: T.primary }]}>
-                {!isPt && (
+              <View style={[styles.radio, isEn && { borderColor: T.primary }]}>
+                {isEn && (
+                  <View
+                    style={[styles.radioInner, { backgroundColor: T.primary }]}
+                  />
+                )}
+              </View>
+            </Pressable>
+
+            <Pressable
+              style={[
+                styles.row,
+                { borderBottomWidth: 1, borderBottomColor: T.border },
+              ]}
+              onPress={() => i18n.changeLanguage("es-ES")}
+            >
+              <Text style={[theme.textStyles.body, { color: T.textPrimary }]}>
+                {t("settings.spanish")}
+              </Text>
+              <View style={[styles.radio, isEs && { borderColor: T.primary }]}>
+                {isEs && (
+                  <View
+                    style={[styles.radioInner, { backgroundColor: T.primary }]}
+                  />
+                )}
+              </View>
+            </Pressable>
+
+            <Pressable
+              style={[
+                styles.row,
+                { borderBottomWidth: 1, borderBottomColor: T.border },
+              ]}
+              onPress={() => i18n.changeLanguage("fr-FR")}
+            >
+              <Text style={[theme.textStyles.body, { color: T.textPrimary }]}>
+                {t("settings.french")}
+              </Text>
+              <View style={[styles.radio, isFr && { borderColor: T.primary }]}>
+                {isFr && (
+                  <View
+                    style={[styles.radioInner, { backgroundColor: T.primary }]}
+                  />
+                )}
+              </View>
+            </Pressable>
+
+            <Pressable
+              style={styles.row}
+              onPress={() => i18n.changeLanguage("de-DE")}
+            >
+              <Text style={[theme.textStyles.body, { color: T.textPrimary }]}>
+                {t("settings.german")}
+              </Text>
+              <View style={[styles.radio, isDe && { borderColor: T.primary }]}>
+                {isDe && (
                   <View
                     style={[styles.radioInner, { backgroundColor: T.primary }]}
                   />
