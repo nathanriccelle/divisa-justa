@@ -31,6 +31,7 @@ import { events, expenses, participants } from "../src/db/schema";
 import { theme } from "../src/theme";
 
 import { useTranslation } from "react-i18next";
+import { BannerAdComponent } from "../src/components/BannerAdComponent";
 import { ParticipantCheckbox } from "../src/components/ParticipantCheckbox";
 
 const T = theme.colors;
@@ -495,6 +496,8 @@ export default function BalancesScreen() {
           </Text>
         </Pressable>
       </View>
+
+      <BannerAdComponent style={{ marginBottom: theme.spacing[4] }} />
     </>
   );
 

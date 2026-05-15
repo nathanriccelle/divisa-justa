@@ -17,6 +17,10 @@ import {
   TextInput,
   View,
 } from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { getSortedCurrencies } from "../src/components/CurrencySelector";
 import { theme } from "../src/theme";
 
@@ -34,6 +38,7 @@ export default function OnboardScreen() {
     sortedCurrencies[0].code,
   );
   const { saveOnboardData } = useUser();
+  const insets = useSafeAreaInsets();
 
   const handleFinishOnboarding = async () => {
     if (!userName.trim()) {
@@ -53,237 +58,242 @@ export default function OnboardScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
+    <SafeAreaView
       style={{ flex: 1, backgroundColor: T.bgScreen }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      edges={["bottom", "left", "right"]}
     >
-      <StatusBar
-        barStyle="light-content"
-        translucent
-        backgroundColor="transparent"
-      />
-
-      <View style={styles.imageContainer}>
-        <Image
-          source={
-            step === 1
-              ? require("../assets/images/amigos.png")
-              : step === 2
-                ? require("../assets/images/money.png")
-                : require("../assets/images/hand.png")
-          }
-          style={styles.image}
-          resizeMode="contain"
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <StatusBar
+          barStyle="light-content"
+          translucent
+          backgroundColor="transparent"
         />
-        <View style={styles.imageOverlay} />
-      </View>
-
-      <View style={[styles.bottomSheet, { backgroundColor: T.bgScreen }]}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          bounces={false}
-        >
-          {step === 1 && (
-            <View style={styles.stepContainer}>
-              <Text style={[styles.title, { color: T.textPrimary }]}>
-                {t("onboard.title_part1")}
-                <Text style={{ color: T.primary }}>
-                  {t("onboard.title_highlight")}
+        <View style={[styles.imageContainer, { paddingTop: insets.top }]}>
+          <Image
+            source={
+              step === 1
+                ? require("../assets/images/amigos.png")
+                : step === 2
+                  ? require("../assets/images/money.png")
+                  : require("../assets/images/hand.png")
+            }
+            style={styles.image}
+            resizeMode="contain"
+          />
+          <View style={styles.imageOverlay} />
+        </View>
+        <View style={[styles.bottomSheet, { backgroundColor: T.bgScreen }]}>
+          <ScrollView
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: Math.max(insets.bottom + 24, 40) },
+            ]}
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+          >
+            {step === 1 && (
+              <View style={styles.stepContainer}>
+                <Text style={[styles.title, { color: T.textPrimary }]}>
+                  {t("onboard.title_part1")}
+                  <Text style={{ color: T.primary }}>
+                    {t("onboard.title_highlight")}
+                  </Text>
+                  {t("onboard.title_part2")}
                 </Text>
-                {t("onboard.title_part2")}
-              </Text>
 
-              <Text style={[styles.subtitle, { color: T.textSecondary }]}>
-                {t("onboard.subtitle")}
-              </Text>
+                <Text style={[styles.subtitle, { color: T.textSecondary }]}>
+                  {t("onboard.subtitle")}
+                </Text>
 
-              <View style={{ flex: 1 }} />
+                <View style={{ flex: 1 }} />
 
-              <Pressable
-                onPress={() => {
-                  Keyboard.dismiss();
-                  setStep(2);
-                }}
-                style={({ pressed }) => [
-                  styles.mainButton,
-                  { backgroundColor: pressed ? T.primaryPress : T.primary },
-                  pressed && { transform: [{ scale: 0.98 }] },
-                ]}
-              >
-                <Text
-                  style={[
-                    theme.textStyles.title2,
-                    { color: T.textOnLime, marginRight: theme.spacing[4] },
+                <Pressable
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setStep(2);
+                  }}
+                  style={({ pressed }) => [
+                    styles.mainButton,
+                    { backgroundColor: pressed ? T.primaryPress : T.primary },
+                    pressed && { transform: [{ scale: 0.98 }] },
                   ]}
                 >
-                  {t("onboard.start_now")}
+                  <Text
+                    style={[
+                      theme.textStyles.title2,
+                      { color: T.textOnLime, marginRight: theme.spacing[4] },
+                    ]}
+                  >
+                    {t("onboard.start_now")}
+                  </Text>
+                  <ArrowRight size={20} color={T.textOnLime} />
+                </Pressable>
+              </View>
+            )}
+
+            {step === 2 && (
+              <View style={styles.stepContainer}>
+                <Text style={[styles.title, { color: T.textPrimary }]}>
+                  {t("onboard.title_part3")}
                 </Text>
-                <ArrowRight size={20} color={T.textOnLime} />
-              </Pressable>
-            </View>
-          )}
 
-          {step === 2 && (
-            <View style={styles.stepContainer}>
-              <Text style={[styles.title, { color: T.textPrimary }]}>
-                {t("onboard.title_part3")}
-              </Text>
+                <Text style={[styles.subtitle, { color: T.textSecondary }]}>
+                  {t("onboard.subtitle_part3")}
+                </Text>
 
-              <Text style={[styles.subtitle, { color: T.textSecondary }]}>
-                {t("onboard.subtitle_part3")}
-              </Text>
+                <View style={{ flex: 1 }} />
 
-              <View style={{ flex: 1 }} />
-
-              <Pressable
-                onPress={() => {
-                  Keyboard.dismiss();
-                  setStep(3);
-                }}
-                style={({ pressed }) => [
-                  styles.mainButton,
-                  { backgroundColor: pressed ? T.primaryPress : T.primary },
-                  pressed && { transform: [{ scale: 0.98 }] },
-                ]}
-              >
-                <Text
-                  style={[
-                    theme.textStyles.title2,
-                    { color: T.textOnLime, marginRight: theme.spacing[4] },
+                <Pressable
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setStep(3);
+                  }}
+                  style={({ pressed }) => [
+                    styles.mainButton,
+                    { backgroundColor: pressed ? T.primaryPress : T.primary },
+                    pressed && { transform: [{ scale: 0.98 }] },
                   ]}
                 >
-                  {t("onboard.next_btn")}
+                  <Text
+                    style={[
+                      theme.textStyles.title2,
+                      { color: T.textOnLime, marginRight: theme.spacing[4] },
+                    ]}
+                  >
+                    {t("onboard.next_btn")}
+                  </Text>
+                  <ArrowRight size={20} color={T.textOnLime} />
+                </Pressable>
+              </View>
+            )}
+
+            {step === 3 && (
+              <View style={styles.stepContainer}>
+                <Text style={[styles.title, { color: T.textPrimary }]}>
+                  {t("onboard.step3_title")}
                 </Text>
-                <ArrowRight size={20} color={T.textOnLime} />
-              </Pressable>
-            </View>
-          )}
 
-          {step === 3 && (
-            <View style={styles.stepContainer}>
-              <Text style={[styles.title, { color: T.textPrimary }]}>
-                {t("onboard.step3_title")}
-              </Text>
-
-              <View style={styles.inputGroup}>
-                <View
-                  style={[
-                    styles.inputContainer,
-                    { backgroundColor: T.bgCardRaised, borderColor: T.border },
-                  ]}
-                >
-                  <TextInput
-                    style={[styles.textInput, { color: T.textPrimary }]}
-                    placeholder={t("onboard.name_placeholder")}
-                    placeholderTextColor={T.textDisabled}
-                    value={userName}
-                    onChangeText={setUserName}
-                    autoFocus={false}
-                    maxLength={12}
-                  />
+                <View style={styles.inputGroup}>
+                  <View
+                    style={[
+                      styles.inputContainer,
+                      {
+                        backgroundColor: T.bgCardRaised,
+                        borderColor: T.border,
+                      },
+                    ]}
+                  >
+                    <TextInput
+                      style={[styles.textInput, { color: T.textPrimary }]}
+                      placeholder={t("onboard.name_placeholder")}
+                      placeholderTextColor={T.textDisabled}
+                      value={userName}
+                      onChangeText={setUserName}
+                      autoFocus={false}
+                      maxLength={12}
+                    />
+                  </View>
                 </View>
-              </View>
 
-              <View
-                style={[styles.inputGroup, { marginTop: theme.spacing[2] }]}
-              >
-                <Text style={[styles.label, { color: T.textSecondary }]}>
-                  {t("onboard.main_currency")}
-                </Text>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.currencyRow}
+                <View
+                  style={[styles.inputGroup, { marginTop: theme.spacing[2] }]}
                 >
-                  {sortedCurrencies.map((currency) => {
-                    if (!currency) return null;
-                    const isSelected = selectedCurrencyCode === currency.code;
-                    return (
-                      <Pressable
-                        key={currency.code}
-                        onPress={() => setSelectedCurrencyCode(currency.code)}
-                        style={({ pressed }) => [
-                          styles.currencyChip,
-                          {
-                            backgroundColor: isSelected
-                              ? T.primary
-                              : T.bgCardRaised,
-                            borderColor: isSelected ? T.primary : T.border,
-                          },
-                          pressed && { opacity: 0.8 },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            theme.textStyles.headline,
+                  <Text style={[styles.label, { color: T.textSecondary }]}>
+                    {t("onboard.main_currency")}
+                  </Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.currencyRow}
+                  >
+                    {sortedCurrencies.map((currency) => {
+                      if (!currency) return null;
+                      const isSelected = selectedCurrencyCode === currency.code;
+                      return (
+                        <Pressable
+                          key={currency.code}
+                          onPress={() => setSelectedCurrencyCode(currency.code)}
+                          style={({ pressed }) => [
+                            styles.currencyChip,
                             {
-                              color: isSelected ? T.textOnLime : T.textPrimary,
-                              marginBottom: 2,
+                              backgroundColor: isSelected
+                                ? T.primary
+                                : T.bgCardRaised,
+                              borderColor: isSelected ? T.primary : T.border,
                             },
+                            pressed && { opacity: 0.8 },
                           ]}
                         >
-                          {currency.code}
-                        </Text>
-                        <Text
-                          style={[
-                            theme.textStyles.footnote,
-                            {
-                              color: isSelected
-                                ? T.textOnLime
-                                : T.textSecondary,
-                              fontSize: 10,
-                            },
-                          ]}
-                        >
-                          {t(`currencies.${currency.code}`, currency.name)}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </ScrollView>
-              </View>
+                          <Text
+                            style={[
+                              theme.textStyles.headline,
+                              {
+                                color: isSelected
+                                  ? T.textOnLime
+                                  : T.textPrimary,
+                                marginBottom: 2,
+                              },
+                            ]}
+                          >
+                            {currency.code}
+                          </Text>
+                          <Text
+                            style={[
+                              theme.textStyles.footnote,
+                              {
+                                color: isSelected
+                                  ? T.textOnLime
+                                  : T.textSecondary,
+                                fontSize: 10,
+                              },
+                            ]}
+                          >
+                            {t(`currencies.${currency.code}`, currency.name)}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
 
-              <View style={{ flex: 1 }} />
+                <View style={{ flex: 1 }} />
 
-              <Pressable
-                onPress={handleFinishOnboarding}
-                style={({ pressed }) => [
-                  styles.mainButton,
-                  { backgroundColor: pressed ? T.primaryPress : T.primary },
-                  pressed && { transform: [{ scale: 0.98 }] },
-                ]}
-              >
-                <Check
-                  size={20}
-                  color={T.textOnLime}
-                  style={{ marginRight: theme.spacing[2] }}
-                />
-                <Text
-                  style={[theme.textStyles.headline, { color: T.textOnLime }]}
+                <Pressable
+                  onPress={handleFinishOnboarding}
+                  style={({ pressed }) => [
+                    styles.mainButton,
+                    { backgroundColor: pressed ? T.primaryPress : T.primary },
+                    pressed && { transform: [{ scale: 0.98 }] },
+                  ]}
                 >
-                  {t("onboard.enter_app")}
-                </Text>
-              </Pressable>
-            </View>
-          )}
-        </ScrollView>
-      </View>
-    </KeyboardAvoidingView>
+                  <Check
+                    size={20}
+                    color={T.textOnLime}
+                    style={{ marginRight: theme.spacing[2] }}
+                  />
+                  <Text
+                    style={[theme.textStyles.headline, { color: T.textOnLime }]}
+                  >
+                    {t("onboard.enter_app")}
+                  </Text>
+                </Pressable>
+              </View>
+            )}
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   imageContainer: {
-    flex: 1.2,
+    flex: 1,
     width: "100%",
-    position: "relative",
-    backgroundColor: "#BEFF6C",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 10,
-    paddingTop: 20,
-    paddingBottom: 20,
+    backgroundColor: theme.colors.primary,
   },
   image: {
     width: "100%",
@@ -291,74 +301,75 @@ const styles = StyleSheet.create({
   },
   imageOverlay: {
     ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.3)",
   },
   bottomSheet: {
-    flex: 1,
-    marginTop: -110,
+    height: "55%",
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
-    overflow: "hidden",
-    ...theme.shadow.lg,
+    marginTop: -32,
+    paddingTop: theme.spacing[8],
+    paddingHorizontal: theme.spacing[6],
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: theme.spacing[8],
   },
   stepContainer: {
     flex: 1,
-    padding: theme.spacing[8],
-    paddingTop: theme.spacing[8],
+    justifyContent: "flex-start",
   },
   title: {
-    ...theme.textStyles.largeTitle,
+    fontFamily: "Inter_800ExtraBold",
+    fontSize: 32,
+    lineHeight: 40,
+    marginBottom: theme.spacing[4],
   },
   subtitle: {
-    ...theme.textStyles.title3,
-    marginTop: 10,
+    fontFamily: "Inter_400Regular",
+    fontSize: theme.fontSize.lg,
+    lineHeight: 28,
   },
   inputGroup: {
-    width: "100%",
-    marginTop: 14,
+    marginTop: theme.spacing[6],
   },
   label: {
-    fontSize: theme.fontSize.xs,
     fontFamily: "Inter_600SemiBold",
-    letterSpacing: 1,
+    fontSize: theme.fontSize.xs,
     textTransform: "uppercase",
-    marginTop: theme.spacing[2],
-    marginBottom: theme.spacing[2],
+    letterSpacing: 1,
+    marginBottom: theme.spacing[3],
   },
   inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    height: 56,
-    borderRadius: theme.borderRadius.lg,
+    height: 64,
+    borderRadius: theme.borderRadius.xl,
     borderWidth: 1,
-    paddingHorizontal: theme.spacing[8],
+    paddingHorizontal: theme.spacing[4],
+    justifyContent: "center",
   },
   textInput: {
-    flex: 1,
     fontFamily: "Inter_500Medium",
-    fontSize: theme.fontSize.md,
+    fontSize: theme.fontSize.lg,
   },
   currencyRow: {
-    flexDirection: "row",
-    gap: theme.spacing[2],
+    paddingVertical: theme.spacing[2],
+    gap: theme.spacing[3],
   },
   currencyChip: {
-    minWidth: 110, // Garante que a caixinha não fique muito pequena
-    paddingHorizontal: theme.spacing[4], // A caixinha cresce se o nome for grande
-    height: 64, // Voltei para 64 para caber o texto confortavelmente
-    borderRadius: theme.borderRadius.lg,
+    paddingHorizontal: theme.spacing[5],
+    paddingVertical: theme.spacing[3],
+    borderRadius: theme.borderRadius.full,
     borderWidth: 1,
-    justifyContent: "center",
     alignItems: "center",
+    marginTop: theme.spacing[8],
+    justifyContent: "center",
+    minWidth: 100,
   },
   mainButton: {
     flexDirection: "row",
-    height: 50,
-    borderRadius: theme.borderRadius.lg,
+    height: 64,
+    borderRadius: theme.borderRadius.xl,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: theme.spacing[8],
   },
 });

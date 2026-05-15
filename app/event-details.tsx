@@ -10,8 +10,12 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
+import { BannerAdComponent } from "../src/components/BannerAdComponent";
 import { EmptyItemsState } from "../src/components/EmptyItemsState";
 import { EventSummaryCard } from "../src/components/EventSummaryCard";
 import { ExpenseDetailsModal } from "../src/components/ExpenseDetailsModal";
@@ -45,6 +49,7 @@ type ExpenseType = {
 export default function EventDetailsScreen() {
   const { eventId } = useLocalSearchParams<{ eventId: string }>();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   const [eventName, setEventName] = useState("");
   const [currencySymbol, setCurrencySymbol] = useState("R$");
@@ -140,7 +145,10 @@ export default function EventDetailsScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: T.bg }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: T.bg }]}
+      edges={["top", "bottom", "left", "right"]}
+    >
       <View style={styles.header}>
         <Pressable
           onPress={() => router.push("/")}
@@ -194,6 +202,8 @@ export default function EventDetailsScreen() {
               {t("event.item_count", { count: eventExpenses.length })}
             </Text>
           </View>
+
+          <BannerAdComponent style={{ marginBottom: theme.spacing[4] }} />
 
           {eventExpenses.length === 0 ? (
             <EmptyItemsState />
@@ -278,7 +288,14 @@ export default function EventDetailsScreen() {
         }}
       />
 
-      <View style={styles.fabContainer}>
+      <View
+        style={[
+          styles.fabContainer,
+          {
+            bottom: Math.max(insets.bottom + 12, 30),
+          },
+        ]}
+      >
         <Pressable
           onPress={() => {
             router.push({
@@ -310,6 +327,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
     flexDirection: "row",
+    minHeight: 56,
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: theme.spacing[4],

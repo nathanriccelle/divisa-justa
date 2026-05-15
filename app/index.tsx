@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { BannerAdComponent } from "../src/components/BannerAdComponent";
 import { HistoryEventCard } from "../src/components/HistoryEventCard";
 import { theme } from "../src/theme";
 
@@ -92,7 +93,7 @@ export default function HomeScreen() {
           }}
         >
           <Pressable onPress={() => router.push("/settings")}>
-            <Settings size={24} color={T.textSecondary} />
+            <Settings size={32} color={T.textSecondary} />
           </Pressable>
         </View>
       </View>
@@ -174,7 +175,10 @@ export default function HomeScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: T.bg }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: T.bg }]}
+      edges={["bottom", "left", "right"]}
+    >
       <StatusBar barStyle="light-content" backgroundColor={T.bgScreen} />
 
       {/* FLATLIST */}
@@ -200,6 +204,8 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 40 }}
       />
+
+      <BannerAdComponent />
     </SafeAreaView>
   );
 }

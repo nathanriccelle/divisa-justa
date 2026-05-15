@@ -189,7 +189,10 @@ export default function AddExpenseScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: T.bg }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: T.bg }]}
+      edges={["bottom", "left", "right"]}
+    >
       <View style={styles.header}>
         <Pressable
           onPress={() => router.back()}

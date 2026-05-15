@@ -5,11 +5,12 @@ import {
   DollarSign,
   Share2,
 } from "lucide-react-native";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   FlatList,
   Platform,
   Pressable,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -25,10 +26,12 @@ import { events, expenses, participants } from "../src/db/schema";
 import { theme } from "../src/theme";
 
 import { useTranslation } from "react-i18next";
+import { ExportModal } from "../src/components/ExportModal";
 import {
   ConsumedItemProps,
   ParticipantSummaryCard,
 } from "../src/components/ParticipantSummaryCard";
+import { useRewardedAd } from "../src/hooks/useRewardedAd";
 
 const T = theme.colors;
 
@@ -84,6 +87,46 @@ export default function DetailedSummaryScreen() {
   const [currencySymbol, setCurrencySymbol] = useState("R$");
   const [eventName, setEventName] = useState("");
   const [summaryData, setSummaryData] = useState<ParticipantSummary[]>([]);
+  const [showExportModal, setShowExportModal] = useState(false);
+
+  const [shouldGeneratePDF, setShouldGeneratePDF] = useState(false);
+
+  const rewardEarnedRef = useRef(false);
+
+  const onRewardEarned = useCallback(() => {
+    rewardEarnedRef.current = true;
+  }, []);
+
+  const onAdClosed = useCallback(() => {
+    if (rewardEarnedRef.current) {
+      rewardEarnedRef.current = false;
+      // Pequeno atraso para garantir que a tela do anúncio fechou por completo
+      setTimeout(() => {
+        setShouldGeneratePDF(true);
+      }, 300);
+    }
+  }, []);
+
+  const { isLoaded, showAd } = useRewardedAd(onRewardEarned, onAdClosed);
+
+  const handleExportPDFClick = () => {
+    setShowExportModal(false);
+    if (isLoaded) {
+      rewardEarnedRef.current = false;
+      showAd();
+    } else {
+      setShouldGeneratePDF(true);
+    }
+  };
+
+  // Efeito necessário para evitar problemas de "stale closure"
+  // e garantir que os dados atualizados sejam sempre lidos.
+  useEffect(() => {
+    if (shouldGeneratePDF) {
+      setShouldGeneratePDF(false);
+      handleGeneratePDF();
+    }
+  }, [shouldGeneratePDF]);
 
   const fetchDetailedSummary = async () => {
     if (!eventId) return;
@@ -289,6 +332,40 @@ export default function DetailedSummaryScreen() {
     }
     return result;
   }, [summaryData]);
+
+  const handleGenerateText = async () => {
+    try {
+      let text = `${t("pdf_export.closing")} ${eventName}\n\n`;
+      text += `💸 ${t("detailed_summary.who_pays_who")}\n`;
+      if (settlements.length > 0) {
+        settlements.forEach((s) => {
+          text += `${s.from} ➔ ${s.to}: ${currencySymbol} ${s.amount.toFixed(2).replace(".", ",")}\n`;
+        });
+      } else {
+        text += `${t("detailed_summary.all_settled")}\n`;
+      }
+
+      text += `\n👤 ${t("detailed_summary.individual_summary")}\n`;
+      summaryData.forEach((p) => {
+        const balance = p.totalPaid - p.totalConsumed;
+        text += `\n${p.name}\n`;
+        text += `- ${t("detailed_summary.total_consumed")}: ${currencySymbol} ${p.totalConsumed.toFixed(2).replace(".", ",")}\n`;
+        text += `- ${t("detailed_summary.total_paid")}: ${currencySymbol} ${p.totalPaid.toFixed(2).replace(".", ",")}\n`;
+        if (balance > 0.001) {
+          text += `- ${t("detailed_summary.to_receive")}: ${currencySymbol} ${Math.abs(balance).toFixed(2).replace(".", ",")}\n`;
+        } else if (balance < -0.001) {
+          text += `- ${t("detailed_summary.to_pay")}: ${currencySymbol} ${Math.abs(balance).toFixed(2).replace(".", ",")}\n`;
+        } else {
+          text += `- ${t("detailed_summary.settled")}\n`;
+        }
+      });
+
+      await Share.share({ message: text });
+      setShowExportModal(false);
+    } catch (error) {
+      console.error("Erro ao exportar texto:", error);
+    }
+  };
 
   const handleGeneratePDF = async () => {
     try {
@@ -588,7 +665,7 @@ export default function DetailedSummaryScreen() {
             { backgroundColor: pressed ? T.primaryPress : T.primary },
             pressed && { transform: [{ scale: 0.98 }] },
           ]}
-          onPress={handleGeneratePDF}
+          onPress={() => setShowExportModal(true)}
         >
           <Share2
             size={20}
@@ -596,10 +673,17 @@ export default function DetailedSummaryScreen() {
             style={{ marginRight: theme.spacing[2] }}
           />
           <Text style={[theme.textStyles.headline, { color: T.textOnLime }]}>
-            {t("detailed_summary.export_pdf")}
+            {t("detailed_summary.export_summary")}
           </Text>
         </Pressable>
       </View>
+
+      <ExportModal
+        visible={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onExportText={handleGenerateText}
+        onExportPDF={handleExportPDFClick}
+      />
     </SafeAreaView>
   );
 }
